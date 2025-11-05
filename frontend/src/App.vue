@@ -1,115 +1,187 @@
 <template>
   <div id="app">
-    <div class="background-gradient"></div>
-    
-    <div class="container-fluid">
-      <!-- 页面标题 -->
-      <PageHeader 
-        :lastUpdate="lastUpdate" 
-        @refresh="refreshData"
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-gradient sticky-top">
+      <div class="container-fluid">
+        <!-- Logo -->
+        <router-link to="/" class="navbar-brand d-flex align-items-center">
+          <i class="bi bi-currency-bitcoin logo-icon"></i>
+          <span class="ms-2 fw-bold">BTC Analysis</span>
+        </router-link>
+
+        <!-- 移动端汉堡菜单 -->
+        <button 
+          class="navbar-toggler" 
+          type="button" 
+          data-bs-toggle="collapse" 
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- 导航菜单 -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav me-auto">
+            <li class="nav-item">
+              <router-link to="/" class="nav-link" active-class="active">
+                <i class="bi bi-speedometer2"></i>
+                <span class="ms-1">仪表板</span>
+              </router-link>
+            </li>
+            <li class="nav-item">
+              <router-link to="/analysis" class="nav-link" active-class="active">
+                <i class="bi bi-graph-up"></i>
+                <span class="ms-1">深度分析</span>
+              </router-link>
+            </li>
+            <li class="nav-item">
+              <router-link to="/trading" class="nav-link" active-class="active">
+                <i class="bi bi-currency-exchange"></i>
+                <span class="ms-1">交易策略</span>
+              </router-link>
+            </li>
+            <li class="nav-item">
+              <router-link to="/history" class="nav-link" active-class="active">
+                <i class="bi bi-clock-history"></i>
+                <span class="ms-1">历史数据</span>
+              </router-link>
+            </li>
+            <li class="nav-item">
+              <router-link to="/settings" class="nav-link" active-class="active">
+                <i class="bi bi-gear"></i>
+                <span class="ms-1">设置</span>
+              </router-link>
+            </li>
+          </ul>
+
+          <!-- 右侧功能按钮 -->
+          <div class="d-flex align-items-center">
+            <!-- 实时价格显示 -->
+            <div class="price-badge me-3" v-if="realtimePrice">
+              <span class="text-muted small">BTC</span>
+              <span class="fw-bold ms-1">${{ formatPrice(realtimePrice) }}</span>
+              <span 
+                class="ms-1 small" 
+                :class="priceChange >= 0 ? 'text-success' : 'text-danger'"
+              >
+                <i :class="priceChange >= 0 ? 'bi bi-arrow-up' : 'bi bi-arrow-down'"></i>
+                {{ Math.abs(priceChange).toFixed(2) }}%
+              </span>
+            </div>
+
+            <!-- 刷新按钮 -->
+            <button 
+              class="btn btn-outline-light btn-sm me-2" 
+              @click="refreshData"
+              :disabled="loading"
+            >
+              <i 
+                class="bi bi-arrow-clockwise" 
+                :class="{ 'spin': loading }"
+              ></i>
+              <span class="ms-1 d-none d-md-inline">刷新</span>
+            </button>
+
+            <!-- 通知按钮 -->
+            <button 
+              class="btn btn-outline-light btn-sm position-relative"
+              @click="showNotifications"
+            >
+              <i class="bi bi-bell"></i>
+              <span 
+                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                v-if="alertCount > 0"
+              >
+                {{ alertCount }}
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- 主内容区域 -->
+    <div class="main-content">
+      <router-view 
         :loading="loading"
+        :statistics="statistics"
+        :prediction="prediction"
+        :historicalData="historicalData"
+        :candlestickData="candlestickData"
+        :riskAlerts="riskAlerts"
+        @refresh="refreshData"
       />
+    </div>
 
-      <!-- 加载状态 -->
-      <LoadingSpinner v-if="loading && !statistics.current_price" />
+    <!-- 页脚 -->
+    <footer class="footer mt-5 py-4 bg-dark text-white">
+      <div class="container text-center">
+        <p class="mb-1">
+          <i class="bi bi-currency-bitcoin text-warning"></i>
+          Bitcoin Analysis Platform
+        </p>
+        <p class="small text-muted mb-0">
+          实时数据来源于 CoinGecko API | 最后更新: {{ lastUpdate }}
+        </p>
+      </div>
+    </footer>
 
-      <!-- 主要内容 -->
-      <div v-else>
-        <!-- 统计卡片 -->
-        <StatCards :statistics="statistics" />
-
-        <!-- 价格预测 -->
-        <PredictionCard :prediction="prediction" />
-
-        <!-- 图表区域 -->
-        <div class="row">
-          <!-- 价格走势图 -->
-          <div class="col-md-8 mb-4">
-            <ChartCard title="价格走势与技术指标" icon="graph-up-arrow">
-              <PriceChart :data="historicalData" />
-            </ChartCard>
-          </div>
-
-          <!-- 风险警报 -->
-          <div class="col-md-4 mb-4">
-            <ChartCard title="风险警报" icon="exclamation-triangle">
-              <RiskAlerts :alerts="riskAlerts" />
-            </ChartCard>
-          </div>
+    <!-- 通知面板（右侧滑出） -->
+    <div 
+      class="notification-panel" 
+      :class="{ 'show': showNotificationPanel }"
+    >
+      <div class="notification-header">
+        <h5 class="mb-0">
+          <i class="bi bi-bell"></i> 风险警报
+        </h5>
+        <button class="btn-close" @click="showNotificationPanel = false"></button>
+      </div>
+      <div class="notification-body">
+        <div v-if="riskAlerts.length === 0" class="text-center text-muted py-5">
+          <i class="bi bi-check-circle" style="font-size: 48px;"></i>
+          <p class="mt-3">暂无警报</p>
         </div>
-
-        <div class="row">
-          <!-- K线图 -->
-          <div class="col-md-6 mb-4">
-            <ChartCard title="K线图" icon="bar-chart-line">
-              <CandlestickChart :data="candlestickData" />
-            </ChartCard>
+        <div 
+          v-for="(alert, index) in riskAlerts" 
+          :key="index"
+          class="alert-item"
+          :class="'alert-' + alert.severity"
+        >
+          <div class="d-flex justify-content-between">
+            <strong>{{ alert.message }}</strong>
+            <span 
+              class="badge"
+              :class="alert.severity === 'high' ? 'bg-danger' : 'bg-warning'"
+            >
+              {{ alert.severity }}
+            </span>
           </div>
-
-          <!-- RSI指标 -->
-          <div class="col-md-6 mb-4">
-            <ChartCard title="RSI相对强弱指标" icon="speedometer2">
-              <RSIChart :data="historicalData" />
-            </ChartCard>
-          </div>
-        </div>
-
-        <div class="row">
-          <!-- 交易量 -->
-          <div class="col-md-12 mb-4">
-            <ChartCard title="交易量分析" icon="bar-chart-fill">
-              <VolumeChart :data="historicalData" />
-            </ChartCard>
-          </div>
+          <small class="text-muted">{{ alert.timestamp }}</small>
         </div>
       </div>
     </div>
 
-    <!-- 浮动刷新按钮 -->
-    <button 
-      class="btn btn-primary refresh-btn" 
-      @click="refreshData" 
-      :disabled="loading"
-    >
-      <i 
-        class="bi bi-arrow-clockwise" 
-        :class="{ 'spin': loading }"
-      ></i>
-    </button>
+    <!-- 遮罩层 -->
+    <div 
+      class="overlay" 
+      :class="{ 'show': showNotificationPanel }"
+      @click="showNotificationPanel = false"
+    ></div>
   </div>
 </template>
 
 <script>
 import axios from 'axios'
-import PageHeader from './components/PageHeader.vue'
-import LoadingSpinner from './components/LoadingSpinner.vue'
-import StatCards from './components/StatCards.vue'
-import PredictionCard from './components/PredictionCard.vue'
-import ChartCard from './components/ChartCard.vue'
-import PriceChart from './components/charts/PriceChart.vue'
-import CandlestickChart from './components/charts/CandlestickChart.vue'
-import RSIChart from './components/charts/RSIChart.vue'
-import VolumeChart from './components/charts/VolumeChart.vue'
-import RiskAlerts from './components/RiskAlerts.vue'
 
 export default {
   name: 'App',
-  components: {
-    PageHeader,
-    LoadingSpinner,
-    StatCards,
-    PredictionCard,
-    ChartCard,
-    PriceChart,
-    CandlestickChart,
-    RSIChart,
-    VolumeChart,
-    RiskAlerts
-  },
   data() {
     return {
-      loading: true,
+      loading: false,
       lastUpdate: '',
+      realtimePrice: 0,
+      priceChange: 0,
       statistics: {
         current_price: 0,
         high_24h: 0,
@@ -141,17 +213,22 @@ export default {
       },
       riskAlerts: [],
       apiBaseUrl: 'http://localhost:5001/api',
-      refreshInterval: null
+      refreshInterval: null,
+      showNotificationPanel: false
+    }
+  },
+  computed: {
+    alertCount() {
+      return this.riskAlerts.filter(a => a.severity === 'high').length
     }
   },
   mounted() {
     this.loadAllData()
     
-    // 改为每2分钟自动刷新一次（避免API限流）
+    // 每2分钟自动刷新
     this.refreshInterval = setInterval(() => {
-      console.log('🔄 Auto refresh...')
       this.loadAllData()
-    }, 120000) // 120秒 = 2分钟
+    }, 120000)
   },
   beforeUnmount() {
     if (this.refreshInterval) {
@@ -160,7 +237,6 @@ export default {
   },
   methods: {
     async loadAllData() {
-      // 不要在刷新时设置loading=true，避免闪烁
       const isFirstLoad = !this.statistics.current_price
       if (isFirstLoad) {
         this.loading = true
@@ -178,7 +254,6 @@ export default {
         console.log('✅ All data loaded successfully')
       } catch (error) {
         console.error('加载数据失败:', error)
-        // 只在首次加载失败时显示错误
         if (isFirstLoad) {
           alert('数据加载失败，请检查后端服务是否运行在 http://localhost:5001')
         }
@@ -191,13 +266,12 @@ export default {
       try {
         const response = await axios.get(`${this.apiBaseUrl}/statistics`)
         if (response.data.success) {
-          // 使用Object.assign保持响应式
           Object.assign(this.statistics, response.data.data)
-          console.log('✅ Statistics loaded:', this.statistics)
+          this.realtimePrice = this.statistics.current_price
+          this.priceChange = this.statistics.price_change_24h
         }
       } catch (error) {
         console.error('Statistics error:', error)
-        // 不要重置为空对象，保持现有数据
       }
     },
 
@@ -205,13 +279,10 @@ export default {
       try {
         const response = await axios.get(`${this.apiBaseUrl}/prediction`)
         if (response.data.success) {
-          // 使用Object.assign保持响应式
           Object.assign(this.prediction, response.data.data)
-          console.log('✅ Prediction loaded:', this.prediction)
         }
       } catch (error) {
         console.error('Prediction error:', error)
-        // 保持现有预测数据
       }
     },
 
@@ -219,17 +290,9 @@ export default {
       try {
         const response = await axios.get(`${this.apiBaseUrl}/historical?days=7`)
         if (response.data.success && response.data.data) {
-          // 检查数据是否有效
           if (response.data.data.timestamps && response.data.data.timestamps.length > 0) {
-            // 使用Object.assign保持响应式
             Object.assign(this.historicalData, response.data.data)
-            console.log('✅ Historical data loaded:', this.historicalData.prices?.length, 'points')
-            // 不需要手动更新图表，图表组件会通过watch自动更新
-          } else {
-            console.warn('⚠️ Historical data is empty')
           }
-        } else {
-          console.warn('⚠️ Historical data request failed:', response.data.message)
         }
       } catch (error) {
         console.error('Historical data error:', error)
@@ -240,10 +303,7 @@ export default {
       try {
         const response = await axios.get(`${this.apiBaseUrl}/candlestick?days=30`)
         if (response.data.success) {
-          // 使用Object.assign保持响应式
           Object.assign(this.candlestickData, response.data.data)
-          console.log('✅ Candlestick data loaded:', this.candlestickData.dates?.length, 'days')
-          // 图表组件会通过watch自动更新
         }
       } catch (error) {
         console.error('Candlestick data error:', error)
@@ -264,6 +324,14 @@ export default {
 
     refreshData() {
       this.loadAllData()
+    },
+
+    showNotifications() {
+      this.showNotificationPanel = !this.showNotificationPanel
+    },
+
+    formatPrice(price) {
+      return price ? price.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '0'
     }
   }
 }
@@ -277,52 +345,158 @@ export default {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  min-height: 100vh;
-  background: #f5f5f5;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #f0f2f5;
 }
 
 #app {
   min-height: 100vh;
-  padding: 20px 0;
-  position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
-.background-gradient {
+/* 导航栏样式 */
+.navbar {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.85) 0%, rgba(118, 75, 162, 0.85) 100%) !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  padding: 0.8rem 0;
+  position: relative;
+  z-index: 1000;
+  backdrop-filter: blur(10px);
+}
+
+.navbar.bg-gradient {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.85) 0%, rgba(118, 75, 162, 0.85) 100%) !important;
+}
+
+.logo-icon {
+  font-size: 2rem;
+  color: #ffd700;
+}
+
+.navbar-brand {
+  font-size: 1.5rem;
+  transition: transform 0.3s;
+  color: #ffd700 !important; /* 金色 */
+}
+
+.navbar-brand:hover {
+  transform: scale(1.05);
+}
+
+.nav-link {
+  color: rgba(34, 216, 191, 0.9) !important;
+  padding: 0.5rem 1rem !important;
+  margin: 0 0.2rem;
+  border-radius: 8px;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+}
+
+.nav-link:hover {
+  background: rgba(255,255,255,0.1);
+  color: rgb(255, 255, 255) !important;
+}
+
+.nav-link.active {
+  background: rgba(255,255,255,0.2);
+  color: rgba(238, 158, 93, 0.9) !important;
+  font-weight: 600;
+}
+
+.price-badge {
+  background: rgba(102, 126, 234, 0.6);
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+}
+
+/* 主内容区域 */
+.main-content {
+  flex: 1;
+  padding: 2rem 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* 页脚 */
+.footer {
+  background: #1a1a2e !important;
+  margin-top: auto;
+}
+
+/* 通知面板 */
+.notification-panel {
+  position: fixed;
+  top: 0;
+  right: -400px;
+  width: 400px;
+  height: 100vh;
+  background: white;
+  box-shadow: -5px 0 20px rgba(0,0,0,0.1);
+  transition: right 0.3s;
+  z-index: 1050;
+  display: flex;
+  flex-direction: column;
+}
+
+.notification-panel.show {
+  right: 0;
+}
+
+.notification-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #dee2e6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.notification-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.alert-item {
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 8px;
+  border-left: 4px solid;
+}
+
+.alert-high {
+  background: #ffe6e6;
+  border-color: #dc3545;
+}
+
+.alert-medium {
+  background: #fff8e6;
+  border-color: #ffc107;
+}
+
+/* 遮罩层 */
+.overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  z-index: -1;
+  background: rgba(0,0,0,0.5);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s;
+  z-index: 1040;
 }
 
-.refresh-btn {
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  font-size: 24px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  transition: transform 0.3s;
+.overlay.show {
+  opacity: 1;
+  visibility: visible;
 }
 
-.refresh-btn:hover {
-  transform: scale(1.1);
-}
-
-.refresh-btn:disabled {
-  opacity: 0.6;
-}
-
+/* 动画 */
 .spin {
   animation: spin 1s linear infinite;
 }
@@ -334,16 +508,17 @@ body {
 
 /* 响应式 */
 @media (max-width: 768px) {
-  #app {
-    padding: 10px 0;
+  .main-content {
+    padding: 1rem 0;
   }
-  
-  .refresh-btn {
-    width: 50px;
-    height: 50px;
-    font-size: 20px;
-    bottom: 20px;
-    right: 20px;
+
+  .notification-panel {
+    width: 100%;
+    right: -100%;
+  }
+
+  .price-badge {
+    font-size: 0.85rem;
   }
 }
 </style>

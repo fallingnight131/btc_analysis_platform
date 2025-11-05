@@ -1,5 +1,8 @@
 const { defineConfig } = require('@vue/cli-service')
-module.exports = {
+
+module.exports = defineConfig({
+  transpileDependencies: true,
+  lintOnSave: false, // 关闭 ESLint（或者设置为 'warning'）
   devServer: {
     proxy: {
       '/api': {
@@ -8,4 +11,4 @@ module.exports = {
       }
     }
   }
-}
+})
