@@ -401,9 +401,14 @@ export default {
     renderEquityChart() {
       if (!this.$refs.equityChart) return
       
-      if (!this.equityChart) {
-        this.equityChart = echarts.init(this.$refs.equityChart)
+      // 销毁旧图表实例,重新创建
+      if (this.equityChart) {
+        this.equityChart.dispose()
+        this.equityChart = null
       }
+      
+      // 创建新的图表实例
+      this.equityChart = echarts.init(this.$refs.equityChart)
       
       const option = {
         tooltip: {
