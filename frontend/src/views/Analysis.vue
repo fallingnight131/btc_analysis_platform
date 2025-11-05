@@ -163,7 +163,10 @@ export default {
     },
     trendStrength() {
       const change = this.statistics?.price_change_24h || 0
-      return Math.min(Math.abs(change) * 10, 100).toFixed(0)
+      return Math.min(Math.abs(change) * 10, 100)  // 返回数字而不是字符串
+    },
+    trendStrengthDisplay() {
+      return this.trendStrength.toFixed(0)  // 用于显示的字符串版本
     },
     sentimentIndex() {
       // 综合RSI、MACD、价格变化计算情绪指数
