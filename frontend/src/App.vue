@@ -6,7 +6,7 @@
         <!-- Logo -->
         <router-link to="/" class="navbar-brand d-flex align-items-center">
           <i class="bi bi-currency-bitcoin logo-icon"></i>
-          <span class="ms-2 fw-bold">BTC Analysis</span>
+          <span class="ms-2 fw-bold">全球比特币交易分析平台</span>
         </router-link>
 
         <!-- 移动端汉堡菜单 -->

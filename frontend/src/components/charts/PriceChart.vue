@@ -58,18 +58,25 @@ export default {
           axisPointer: { type: 'cross' }
         },
         legend: {
-          data: ['价格', 'MA5', 'MA10', 'MA20']
+          data: ['价格', 'MA5', 'MA10', 'MA20'],
+          top: '5%',  // 将图例放在顶部
+          left: 'center'
         },
         grid: {
           left: '3%',
           right: '4%',
-          bottom: '3%',
+          bottom: '15%',  // 增加底部空间,避免与x轴标签重叠
+          top: '15%',  // 增加顶部空间,为图例留出位置
           containLabel: true
         },
         xAxis: {
           type: 'category',
           data: this.data.timestamps,
-          axisLabel: { rotate: 45, fontSize: 10 }
+          axisLabel: { 
+            rotate: 45, 
+            fontSize: 10,
+            margin: 10  // 增加标签与轴的距离
+          }
         },
         yAxis: {
           type: 'value',
