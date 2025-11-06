@@ -363,32 +363,3 @@ pip install -r requirements.txt
 rm -rf node_modules package-lock.json
 npm install
 ```
-
-## 🤝 贡献指南
-
-欢迎提交 Pull Request 或 Issue！
-
-1. Fork 本项目
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 开启 Pull Request
-
-## 📄 许可证
-
-本项目采用 MIT 许可证。
-
-## 👥 作者
-
-- **fallingnight131** - [GitHub](https://github.com/fallingnight131)
-
-## 🙏 致谢
-
-- [CoinGecko API](https://www.coingecko.com/en/api) - 提供比特币数据
-- [Vue.js](https://vuejs.org/) - 渐进式 JavaScript 框架
-- [Flask](https://flask.palletsprojects.com/) - Python Web 框架
-- [ECharts](https://echarts.apache.org/) - 数据可视化库
-
----
-
-⭐ 如果这个项目对你有帮助，请给它一个星标！
