@@ -168,6 +168,12 @@
       :class="{ 'show': showNotificationPanel }"
       @click="showNotificationPanel = false"
     ></div>
+
+    <!-- 更新提示 Toast -->
+    <div class="update-toast" :class="{ 'show': showUpdateToast }">
+      <i class="bi bi-arrow-clockwise spin"></i>
+      <span class="ms-2">数据更新中...</span>
+    </div>
   </div>
 </template>
 
@@ -214,7 +220,8 @@ export default {
       riskAlerts: [],
       apiBaseUrl: 'http://localhost:5001/api',
       refreshInterval: null,
-      showNotificationPanel: false
+      showNotificationPanel: false,
+      showUpdateToast: false
     }
   },
   computed: {
@@ -225,10 +232,10 @@ export default {
   mounted() {
     this.loadAllData()
     
-    // 每2分钟自动刷新
+    // 每30秒自动刷新（更频繁的实时更新）
     this.refreshInterval = setInterval(() => {
       this.loadAllData()
-    }, 120000)
+    }, 30000)
   },
   beforeUnmount() {
     if (this.refreshInterval) {
@@ -240,6 +247,9 @@ export default {
       const isFirstLoad = !this.statistics.current_price
       if (isFirstLoad) {
         this.loading = true
+      } else {
+        // 非首次加载时显示更新提示
+        this.showUpdateToast = true
       }
       
       try {
@@ -252,8 +262,16 @@ export default {
         ])
         this.lastUpdate = new Date().toLocaleString('zh-CN')
         console.log('✅ All data loaded successfully')
+        
+        // 隐藏更新提示
+        if (!isFirstLoad) {
+          setTimeout(() => {
+            this.showUpdateToast = false
+          }, 1000)
+        }
       } catch (error) {
         console.error('加载数据失败:', error)
+        this.showUpdateToast = false
         if (isFirstLoad) {
           alert('数据加载失败，请检查后端服务是否运行在 http://localhost:5001')
         }
@@ -506,6 +524,34 @@ body {
   to { transform: rotate(360deg); }
 }
 
+/* 更新提示 Toast */
+.update-toast {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.8rem 1.5rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  display: flex;
+  align-items: center;
+  z-index: 1030;
+  transform: translateX(400px);
+  opacity: 0;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.update-toast.show {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.update-toast i {
+  font-size: 1.2rem;
+}
+
 /* 响应式 */
 @media (max-width: 768px) {
   .main-content {
@@ -519,6 +565,17 @@ body {
 
   .price-badge {
     font-size: 0.85rem;
+  }
+  
+  .update-toast {
+    top: auto;
+    bottom: 20px;
+    right: 50%;
+    transform: translateX(50%) translateY(100px);
+  }
+  
+  .update-toast.show {
+    transform: translateX(50%) translateY(0);
   }
 }
 </style>

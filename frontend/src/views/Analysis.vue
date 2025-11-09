@@ -1,17 +1,37 @@
 <template>
   <div class="container-fluid">
     <div class="page-header mb-4">
-      <h2 class="mb-0">
-        <i class="bi bi-graph-up"></i>
-        深度分析
-      </h2>
-      <p class="text-muted mb-0">多维度技术分析与市场洞察</p>
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h2 class="mb-0">
+            <i class="bi bi-graph-up"></i>
+            深度分析
+            <span class="live-badge" :class="{ 'pulse': isUpdating }">
+              <i class="bi bi-circle-fill"></i> 实时
+            </span>
+          </h2>
+          <p class="text-muted mb-0">多维度技术分析与市场洞察</p>
+        </div>
+        <div class="d-flex align-items-center">
+          <small class="text-muted me-3">
+            <i class="bi bi-clock"></i> 更新于 {{ lastUpdateTime }}
+          </small>
+          <button 
+            class="btn btn-primary btn-sm"
+            @click="handleRefresh"
+            :disabled="isUpdating"
+          >
+            <i class="bi bi-arrow-clockwise" :class="{ 'spin': isUpdating }"></i>
+            {{ isUpdating ? '更新中...' : '刷新分析' }}
+          </button>
+        </div>
+      </div>
     </div>
 
     <div class="row">
       <!-- 技术指标对比 -->
       <div class="col-md-12 mb-4">
-        <div class="analysis-card">
+        <div class="analysis-card" :class="{ 'updating': isUpdating }">
           <h4><i class="bi bi-bar-chart-line"></i> 技术指标总览</h4>
           <div class="row mt-4">
             <div class="col-md-3">
@@ -45,7 +65,7 @@
               <div class="indicator-box">
                 <div class="indicator-label">趋势强度</div>
                 <div class="indicator-value text-primary">
-                  {{ trendStrength }}%
+                  {{ trendStrength.toFixed(2) }}%
                 </div>
                 <div class="indicator-status">{{ getTrendStatus(trendStrength) }}</div>
               </div>
@@ -56,7 +76,7 @@
 
       <!-- 市场情绪分析 -->
       <div class="col-md-6 mb-4">
-        <div class="analysis-card">
+        <div class="analysis-card" :class="{ 'updating': isUpdating }">
           <h4><i class="bi bi-emoji-smile"></i> 市场情绪</h4>
           <div class="sentiment-gauge mt-4">
             <div class="gauge-container">
@@ -83,7 +103,7 @@
 
       <!-- 支撑位与阻力位 -->
       <div class="col-md-6 mb-4">
-        <div class="analysis-card">
+        <div class="analysis-card" :class="{ 'updating': isUpdating }">
           <h4><i class="bi bi-layers"></i> 支撑位与阻力位</h4>
           <div class="mt-4">
             <div class="level-item resistance">
@@ -112,8 +132,15 @@
 
       <!-- AI分析建议 -->
       <div class="col-md-12 mb-4">
-        <div class="analysis-card ai-suggestion">
-          <h4><i class="bi bi-robot"></i> AI智能分析</h4>
+        <div class="analysis-card ai-suggestion" :class="{ 'updating': isUpdating }">
+          <div class="d-flex justify-content-between align-items-center">
+            <h4><i class="bi bi-robot"></i> AI智能分析</h4>
+            <div class="ai-status" v-if="isUpdating">
+              <span class="analyzing-text">
+                <i class="bi bi-cpu"></i> 分析中...
+              </span>
+            </div>
+          </div>
           <div class="suggestion-content mt-3">
             <div class="row">
               <div class="col-md-4">
@@ -148,6 +175,30 @@ export default {
     statistics: Object,
     historicalData: Object,
     prediction: Object
+  },
+  data() {
+    return {
+      isUpdating: false,
+      lastUpdateTime: '刚刚',
+      updateTimer: null
+    }
+  },
+  mounted() {
+    this.updateLastUpdateTime()
+  },
+  beforeUnmount() {
+    if (this.updateTimer) {
+      clearInterval(this.updateTimer)
+    }
+  },
+  watch: {
+    statistics: {
+      handler() {
+        this.updateLastUpdateTime()
+        this.triggerUpdateAnimation()
+      },
+      deep: true
+    }
   },
   computed: {
     currentRSI() {
@@ -206,6 +257,24 @@ export default {
     }
   },
   methods: {
+    updateLastUpdateTime() {
+      const now = new Date()
+      this.lastUpdateTime = now.toLocaleTimeString('zh-CN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      })
+    },
+    triggerUpdateAnimation() {
+      this.isUpdating = true
+      setTimeout(() => {
+        this.isUpdating = false
+      }, 1500)
+    },
+    handleRefresh() {
+      this.$emit('refresh')
+      this.triggerUpdateAnimation()
+    },
     getRSIClass(rsi) {
       if (rsi > 70) return 'text-danger'
       if (rsi < 30) return 'text-success'
@@ -281,12 +350,115 @@ export default {
   font-weight: 700;
 }
 
+/* 实时标识 */
+.live-badge {
+  display: inline-block;
+  font-size: 0.8rem;
+  padding: 0.3rem 0.8rem;
+  background: #28a745;
+  color: white;
+  border-radius: 20px;
+  margin-left: 1rem;
+  font-weight: 500;
+  vertical-align: middle;
+}
+
+.live-badge i {
+  font-size: 0.5rem;
+  margin-right: 0.3rem;
+  animation: blink 2s infinite;
+}
+
+.live-badge.pulse {
+  animation: pulse-badge 1.5s ease-in-out;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+@keyframes pulse-badge {
+  0%, 100% { 
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+  }
+  50% { 
+    transform: scale(1.05);
+    box-shadow: 0 0 0 10px rgba(40, 167, 69, 0);
+  }
+}
+
+/* 旋转动画 */
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* AI 分析状态 */
+.ai-status {
+  display: flex;
+  align-items: center;
+}
+
+.analyzing-text {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+  padding: 0.4rem 0.8rem;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  animation: pulse-text 1.5s infinite;
+}
+
+.analyzing-text i {
+  margin-right: 0.5rem;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes pulse-text {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
 .analysis-card {
   background: white;
   padding: 2rem;
   border-radius: 15px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   height: 100%;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 更新动画效果 */
+.analysis-card.updating::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(102, 126, 234, 0.1),
+    transparent
+  );
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+.analysis-card.updating {
+  box-shadow: 0 2px 20px rgba(102, 126, 234, 0.3);
 }
 
 .indicator-box {
