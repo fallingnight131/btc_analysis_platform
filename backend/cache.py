@@ -35,8 +35,8 @@ class CacheManager:
         self.cached_data[key]['data'] = data
         self.cached_data[key]['last_update'] = datetime.now()
     
-    def is_cache_valid(self, key, max_age_seconds=600):
-        """检查缓存是否有效"""
+    def is_cache_valid(self, key, max_age_seconds=3600):
+        """检查缓存是否有效（默认1小时）"""
         cache = self.cached_data.get(key)
         if not cache or cache['last_update'] is None or cache['data'] is None:
             return False

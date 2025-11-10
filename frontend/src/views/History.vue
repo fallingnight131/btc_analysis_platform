@@ -294,10 +294,13 @@ export default {
         const timestamps = apiData.timestamps || []
         
         for (let i = 0; i < prices.length; i++) {
-          const open = i > 0 ? prices[i - 1] : prices[i]
-          const close = prices[i]
-          const high = Math.max(open, close) * (1 + Math.random() * 0.005)
-          const low = Math.min(open, close) * (1 - Math.random() * 0.005)
+          const price = prices[i]
+          // 使用价格本身作为 OHLC，避免生成不一致的数据
+          // 由于后端只返回单一价格点，我们将其用作所有 OHLC 值
+          const open = i > 0 ? prices[i - 1] : price
+          const close = price
+          const high = Math.max(open, close)
+          const low = Math.min(open, close)
           
           data.push({
             time: timestamps[i] || new Date().toLocaleString('zh-CN'),
@@ -341,13 +344,20 @@ export default {
         const data = []
         let basePrice = this.statistics?.current_price || 70000
         
+        // 使用确定性的伪随机数生成器，基于索引值
+        const getSeededValue = (index, seed, min, max) => {
+          const x = Math.sin(index * seed) * 10000
+          return min + (x - Math.floor(x)) * (max - min)
+        }
+        
         for (let i = 0; i < dataPoints; i++) {
-          const change = (Math.random() - 0.5) * 0.02
+          // 使用基于索引的确定性变化，而不是随机数
+          const changeSeed = getSeededValue(i, 12.9898, -0.01, 0.01)
           const open = basePrice
-          const close = basePrice * (1 + change)
-          const high = Math.max(open, close) * (1 + Math.random() * 0.01)
-          const low = Math.min(open, close) * (1 - Math.random() * 0.01)
-          const volume = (Math.random() * 50000000 + 10000000)
+          const close = basePrice * (1 + changeSeed)
+          const high = Math.max(open, close) * (1 + 0.005)
+          const low = Math.min(open, close) * (1 - 0.005)
+          const volume = getSeededValue(i, 78.233, 10000000, 60000000)
           
           const date = new Date(this.startDate)
           date.setHours(date.getHours() + i)

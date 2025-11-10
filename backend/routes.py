@@ -52,36 +52,44 @@ def register_routes(app):
             days = request.args.get('days', default=7, type=int)
             cache_key = f'historical_{days}d'
             
-            # 检查缓存 - 30分钟 (增加到30分钟以减少API调用)
+            # 检查缓存 - 1小时 (历史数据不需要频繁更新)
             days_requested = days
-            if cache_manager.is_cache_valid(cache_key, max_age_seconds=1800):
+            if cache_manager.is_cache_valid(cache_key, max_age_seconds=3600):
                 cache = cache_manager.get_cache(cache_key)
                 df = cache['data']
                 print(f"✅ 使用缓存的{days}天数据")
             else:
-                df = BitcoinAPI.fetch_historical_data(days)
-                if df is None or df.empty:
-                    # 直接从数据库获取（数据库只保留最近一年的数据）
-                    print(f"⚠️ API失败，尝试从数据库获取最近数据（数据库仅保留最近一年）")
-                    df = db_manager.get_historical_data(days=min(days, 365))
-                    
-                if df is None or df.empty:
-                    # 如果还是失败，尝试返回旧的缓存数据
-                    cache = cache_manager.get_cache(cache_key)
-                    if cache['data'] is not None:
-                        print(f"⚠️ 数据库也无数据，返回旧缓存")
-                        df = cache['data']
+                # 优先从数据库获取历史数据（更稳定，不会变化）
+                print(f"📊 从数据库获取{days}天历史数据")
+                df = db_manager.get_historical_data(days=min(days, 365))
+                
+                # 如果数据库没有足够数据，再尝试API
+                if df is None or df.empty or len(df) < days * 12:  # 每天至少12个数据点
+                    print(f"⚠️ 数据库数据不足，尝试API获取")
+                    df_api = BitcoinAPI.fetch_historical_data(days)
+                    if df_api is not None and not df_api.empty:
+                        df = df_api
+                    elif df is not None and not df.empty:
+                        # API失败，使用数据库的数据（即使不足）
+                        print(f"⚠️ API失败，使用数据库现有数据")
                     else:
-                        return jsonify({
-                            'success': False,
-                            'message': 'No data available (offline mode)',
-                            'offline_mode': True
-                        }), 200  # 返回200而不是500
-                else:
+                        # 如果还是失败，尝试返回旧的缓存数据
+                        cache = cache_manager.get_cache(cache_key)
+                        if cache['data'] is not None:
+                            print(f"⚠️ 返回旧缓存数据")
+                            df = cache['data']
+                        else:
+                            return jsonify({
+                                'success': False,
+                                'message': 'No data available (offline mode)',
+                                'offline_mode': True
+                            }), 200  # 返回200而不是500
+                
+                if df is not None and not df.empty:
                     # 计算技术指标
                     df = calculate_technical_indicators(df)
                     cache_manager.set_cache(cache_key, df)
-                    print(f"✅ 获取并缓存新的{days}天数据")
+                    print(f"✅ 缓存{days}天数据（{len(df)}条记录）")
             
             # 确保df有所有必要的列
             required_cols = ['datetime', 'price', 'volume', 'ma_5', 'ma_10', 'ma_20', 
