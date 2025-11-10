@@ -128,6 +128,7 @@ class DatabaseManager:
             start_time = end_time - timedelta(days=days)
             
             # 查询数据 - 使用 text() 来处理参数绑定
+            # 升序排列，从旧到新，与API返回的顺序一致
             from sqlalchemy import text
             query = text('''
                 SELECT timestamp, price, volume

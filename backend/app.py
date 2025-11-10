@@ -4,8 +4,12 @@ Bitcoin Analysis Platform - 主应用
 """
 from flask import Flask
 from flask_cors import CORS
+import atexit
 
 from routes import register_routes
+from database import db_manager
+from cache import cache_manager
+from scheduler import init_scheduler, get_scheduler
 
 
 def create_app():
@@ -15,6 +19,16 @@ def create_app():
     
     # 注册所有路由
     register_routes(app)
+    
+    # 初始化定时任务调度器
+    init_scheduler(db_manager, cache_manager)
+    
+    # 注册清理函数，确保应用关闭时停止调度器
+    @atexit.register
+    def shutdown_scheduler():
+        scheduler = get_scheduler()
+        if scheduler:
+            scheduler.stop()
     
     return app
 
@@ -29,7 +43,8 @@ if __name__ == '__main__':
     print("   - GET /api/risk-alerts    - 风险警报")
     print("   - GET /api/candlestick    - K线数据")
     print("   - GET /api/health         - 健康检查")
-    print("\n✅ Server running on http://localhost:5001")
+    print("\n⏰ 定时任务: 每小时第5分钟自动更新数据")
+    print("✅ Server running on http://localhost:5001")
     print("🔍 Debug mode enabled - Check console for detailed logs\n")
     
     app = create_app()

@@ -220,6 +220,7 @@
 
 <script>
 import * as echarts from 'echarts'
+import axios from 'axios'
 
 export default {
   name: 'HistoryView',
@@ -239,7 +240,8 @@ export default {
       historyChart: null,
       distributionChart: null,
       currentPage: 1,
-      pageSize: 50
+      pageSize: 50,
+      apiBaseUrl: 'http://localhost:5001/api'
     }
   },
   computed: {
@@ -273,6 +275,7 @@ export default {
     },
     async queryData() {
       this.loading = true
+      this.currentPage = 1  // 每次查询重置到第一页
       
       try {
         // 计算查询天数
@@ -313,6 +316,9 @@ export default {
           })
         }
         
+        // 后端返回的数据已经是从旧到新的顺序，适合图表显示
+        console.log('收到数据 - 第一条时间:', data[0]?.time, '最后一条:', data[data.length-1]?.time)
+        
         // 过滤日期范围
         const startTime = new Date(this.startDate).getTime()
         const endTime = new Date(this.endDate).getTime() + 24 * 60 * 60 * 1000
@@ -323,6 +329,9 @@ export default {
         
         const actualData = filteredData.length > 0 ? filteredData : data
         
+        // 为表格准备反转的数据（最新的在前）
+        const tableData = [...actualData].reverse()
+        
         this.queryResult = {
           dataPoints: actualData.length,
           highPrice: Math.max(...actualData.map(d => d.high)),
@@ -330,8 +339,9 @@ export default {
           avgPrice: actualData.reduce((sum, d) => sum + d.close, 0) / actualData.length,
           totalVolume: actualData.reduce((sum, d) => sum + d.volume, 0),
           priceChange: actualData.length > 1 ? ((actualData[actualData.length - 1].close - actualData[0].open) / actualData[0].open) * 100 : 0,
-          data: actualData.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize),
-          allData: actualData
+          data: tableData.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize),
+          allData: actualData,  // 图表用：从旧到新
+          tableData: tableData  // 表格用：从新到旧
         }
       } catch (error) {
         console.error('Query data error:', error)
@@ -525,7 +535,8 @@ export default {
     changePage(page) {
       if (page < 1 || page > this.totalPages) return
       this.currentPage = page
-      this.queryResult.data = this.queryResult.allData.slice((page - 1) * this.pageSize, page * this.pageSize)
+      // 使用 tableData 进行分页（最新数据在前）
+      this.queryResult.data = this.queryResult.tableData.slice((page - 1) * this.pageSize, page * this.pageSize)
     },
     formatNumber(num) {
       return num ? num.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '0'

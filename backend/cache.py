@@ -62,6 +62,18 @@ class CacheManager:
     def increment_request_count(self):
         """增加请求计数"""
         self.request_counter['count'] += 1
+    
+    def clear_cache(self, key):
+        """清除指定的缓存"""
+        if key in self.cached_data:
+            self.cached_data[key] = {'last_update': None, 'data': None}
+            print(f"🗑️ 清除缓存: {key}")
+    
+    def clear_all_cache(self):
+        """清除所有缓存"""
+        for key in self.cached_data.keys():
+            self.cached_data[key] = {'last_update': None, 'data': None}
+        print("🗑️ 清除所有缓存")
 
 
 # 创建全局缓存管理器实例
