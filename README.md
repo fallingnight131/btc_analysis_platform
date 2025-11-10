@@ -145,12 +145,43 @@ docker-compose up -d --build
 
 ## 🐳 Docker 管理
 
-### 常用命令
+### 🚀 启动和停止
 
+**启动服务:**
 ```bash
-# 启动所有服务
+# 首次启动（自动构建）
 docker-compose up -d
 
+# 或使用启动脚本
+bash docker-start.sh        # macOS/Linux
+docker-start.bat            # Windows（双击运行）
+```
+
+**停止服务（释放内存和CPU）:**
+```bash
+docker-compose down
+```
+> ✅ 停止后会立即释放内存和 CPU，但保留镜像和数据  
+> ✅ 下次启动只需 10-20 秒
+
+**重启服务:**
+```bash
+# 方式 1: 重启所有服务
+docker-compose restart
+
+# 方式 2: 重启特定服务
+docker-compose restart backend
+docker-compose restart frontend
+docker-compose restart mysql
+
+# 方式 3: 停止后重新启动
+docker-compose down
+docker-compose up -d
+```
+
+### 📋 常用命令
+
+```bash
 # 查看服务状态
 docker-compose ps
 
@@ -162,18 +193,76 @@ docker-compose logs -f backend
 docker-compose logs -f frontend
 docker-compose logs -f mysql
 
-# 停止服务
+# 查看实时资源占用
+docker stats
+
+# 查看磁盘占用
+docker system df
+
+# 重新构建并启动（修改代码后）
+docker-compose up -d --build
+```
+
+### 🗑️ 清理和删除
+
+```bash
+# 停止并删除容器（保留镜像和数据）
 docker-compose down
 
-# 重启服务
-docker-compose restart
-
-# 重新构建并启动
-docker-compose up -d --build
-
-# 完全清理（包括数据卷）
+# 停止并删除数据卷（⚠️ 数据库数据会丢失）
 docker-compose down -v
+
+# 完全清理（包括镜像）
+docker-compose down
+docker rmi btc_analysis_platform-backend btc_analysis_platform-frontend mysql:8.0
 ```
+
+### 💾 资源占用说明
+
+**容器运行时（Up 状态）:**
+- 磁盘: ~2.4GB (镜像文件)
+- 内存: ~500MB-1GB
+- CPU: 1-5% (空闲) / 10-30% (处理请求)
+
+**容器停止后（执行 `docker-compose down`）:**
+- 磁盘: ~2.4GB (镜像保留，快速重启)
+- 内存: 0 (已释放) ✅
+- CPU: 0 (已释放) ✅
+
+> 💡 **建议**: 不使用时执行 `docker-compose down` 停止服务，释放系统资源
+
+### 💡 重要说明
+
+**电脑重启后无需重新构建:**
+- ✅ Docker 镜像会永久保存在磁盘
+- ✅ 数据库数据会自动恢复（存储在 Docker 数据卷）
+- ⚡ 重启后只需 `docker compose up -d`（10-20 秒快速启动）
+- 🚫 **不需要** 再执行 `--build`（除非修改了代码）
+
+**何时需要重新构建:**
+```bash
+# 修改代码/依赖后才需要重建
+docker compose up -d --build
+
+# 或只重建特定服务
+docker compose up -d --build backend
+docker compose up -d --build frontend
+```
+
+需要重建的情况:
+- ✏️ 修改了 `Dockerfile`
+- ✏️ 修改了 `requirements.txt` (Python 依赖)
+- ✏️ 修改了 `package.json` (Node.js 依赖)
+- ✏️ 修改了应用源代码
+
+**首次启动 vs 重启对比:**
+
+| 操作 | 首次启动 | 电脑重启后 |
+|------|----------|------------|
+| 时间 | 3-5 分钟 | **10-20 秒** ⚡ |
+| 下载 | 需要 | 无需 ✅ |
+| 构建 | 需要 | 无需 ✅ |
+| 数据 | 初始化 | 自动恢复 ✅ |
 
 ### 服务架构
 
@@ -181,9 +270,9 @@ docker-compose down -v
 
 | 服务 | 容器名 | 端口 | 说明 |
 |------|--------|------|------|
-| **MySQL** | `btc-mysql` | 3306 | 数据库服务（MySQL 8.0） |
-| **Backend** | `btc-backend` | 5001 | Flask API 服务（Python 3.11） |
-| **Frontend** | `btc-frontend` | 8080 | Vue 3 + Nginx 静态服务 |
+| **MySQL** | `btc_analysis_platform_mysql` | 3306 | 数据库服务（MySQL 8.0） |
+| **Backend** | `btc_analysis_platform_backend` | 5001 | Flask API 服务（Python 3.11） |
+| **Frontend** | `btc_analysis_platform_frontend` | 8080 | Vue 3 + Nginx 静态服务 |
 
 ---
 

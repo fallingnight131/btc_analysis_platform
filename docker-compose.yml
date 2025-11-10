@@ -2,7 +2,7 @@ services:
   # MySQL 数据库
   mysql:
     image: mysql:8.0
-    container_name: btc_mysql
+    container_name: btc_analysis_platform_mysql
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: bitcoin123
@@ -27,7 +27,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: btc_backend
+    container_name: btc_analysis_platform_backend
     restart: unless-stopped
     environment:
       MYSQL_HOST: mysql
@@ -57,7 +57,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: btc_frontend
+    container_name: btc_analysis_platform_frontend
     restart: unless-stopped
     ports:
       - "8080:80"

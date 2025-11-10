@@ -23,14 +23,27 @@ fi
 echo "✅ Docker 环境检查通过"
 echo ""
 
-# 停止并删除旧容器
+# 检查镜像是否存在
+BACKEND_IMAGE=$(docker images -q btc_analysis_platform-backend 2>/dev/null)
+FRONTEND_IMAGE=$(docker images -q btc_analysis_platform-frontend 2>/dev/null)
+
+if [ -z "$BACKEND_IMAGE" ] || [ -z "$FRONTEND_IMAGE" ]; then
+    echo "📦 首次运行，需要构建镜像（约 3-5 分钟）..."
+    BUILD_FLAG="--build"
+else
+    echo "📦 检测到已有镜像，快速启动（约 10 秒）..."
+    echo "💡 提示: 如需重新构建，请运行: docker compose up -d --build"
+    BUILD_FLAG=""
+fi
+
+# 停止旧容器（但保留镜像）
 echo "🧹 清理旧容器..."
 docker-compose down 2>/dev/null
 
-# 构建并启动服务
-echo "🚀 构建并启动服务..."
+# 启动服务
+echo "🚀 启动服务..."
 echo ""
-docker-compose up -d --build
+docker-compose up -d $BUILD_FLAG
 
 # 等待服务启动
 echo ""

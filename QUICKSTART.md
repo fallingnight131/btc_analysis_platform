@@ -188,24 +188,90 @@ docker-compose down
 
 ## 🔧 常用管理命令
 
+### 启动服务
 ```bash
-# 启动服务
 docker-compose up -d
+```
 
-# 停止服务
+### 停止服务（释放内存和CPU）
+```bash
 docker-compose down
+```
+> ✅ 停止后立即释放内存和 CPU  
+> ✅ 保留镜像和数据，下次快速启动
 
-# 查看日志
-docker-compose logs -f
-
-# 重启服务
+### 重启服务
+```bash
+# 重启所有服务
 docker-compose restart
 
-# 完全清理（包括数据）
+# 重启特定服务
+docker-compose restart backend
+```
+
+### 查看日志
+```bash
+# 所有服务日志
+docker-compose logs -f
+
+# 特定服务日志
+docker-compose logs -f backend
+```
+
+### 查看服务状态
+```bash
+docker-compose ps
+```
+
+### 查看资源占用
+```bash
+# 实时资源占用
+docker stats
+
+# 磁盘占用
+docker system df
+```
+
+### 完全清理（⚠️ 会删除数据）
+```bash
 docker-compose down -v
 ```
 
 ---
+
+### 💡 电脑重启后
+
+**无需重新构建！直接启动即可：**
+
+```bash
+# 方式 1: 使用脚本
+bash docker-start.sh
+
+# 方式 2: 直接启动
+docker compose up -d
+```
+
+**说明:**
+- ✅ Docker 镜像已保存（约 2.4GB）
+- ✅ 数据库数据自动恢复
+- ⚡ 启动时间：**10-20 秒**（vs 首次 3-5 分钟）
+- 🚫 **不需要** `--build`（除非修改了代码）
+
+---
+
+### 💾 资源占用说明
+
+**容器运行时:**
+- 磁盘: 2.4GB
+- 内存: 500MB-1GB
+- CPU: 1-5% (空闲)
+
+**停止后（docker-compose down）:**
+- 磁盘: 2.4GB (镜像保留)
+- 内存: 0 ✅
+- CPU: 0 ✅
+
+> 💡 不使用时建议停止容器，释放系统资源
 
 ## 🐛 遇到问题？
 

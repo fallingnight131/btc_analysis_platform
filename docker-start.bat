@@ -25,14 +25,25 @@ if %ERRORLEVEL% neq 0 (
 echo ✅ Docker 环境检查通过
 echo.
 
-REM 停止并删除旧容器
+REM 检查镜像是否存在
+docker images btc_analysis_platform-backend >nul 2>&1
+if %ERRORLEVEL% equ 0 (
+    echo 📦 检测到已有镜像，快速启动（约 10 秒）...
+    echo 💡 提示: 如需重新构建，请运行: docker-compose up -d --build
+    set BUILD_FLAG=
+) else (
+    echo 📦 首次运行，需要构建镜像（约 3-5 分钟）...
+    set BUILD_FLAG=--build
+)
+
+REM 停止旧容器（但保留镜像）
 echo 🧹 清理旧容器...
 docker-compose down 2>nul
 
-REM 构建并启动服务
-echo 🚀 构建并启动服务...
+REM 启动服务
+echo 🚀 启动服务...
 echo.
-docker-compose up -d --build
+docker-compose up -d %BUILD_FLAG%
 
 REM 等待服务启动
 echo.
