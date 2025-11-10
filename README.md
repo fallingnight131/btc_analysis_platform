@@ -1,11 +1,13 @@
 # 📊 Bitcoin Analysis Platform
 
-比特币分析平台 - 一个功能完整的全栈 Web 应用，提供实时比特币数据分析、价格预测、技术指标分析和风险评估。
+> **比特币分析平台** - 使用 Docker 一键部署的全栈 Web 应用，提供实时比特币数据分析、价格预测、技术指标分析和风险评估。
 
-![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
-![Flask](https://img.shields.io/badge/Flask-3.0.0-green.svg)
+![Python](https://img.shields.io/badge/Python-3.11-blue.svg)
 ![Vue.js](https://img.shields.io/badge/Vue.js-3.0-brightgreen.svg)
-![MySQL](https://img.shields.io/badge/MySQL-5.7+-orange.svg)
+![MySQL](https://img.shields.io/badge/MySQL-8.0-orange.svg)
+![Docker](https://img.shields.io/badge/Docker-20.10+-blue.svg)
+
+---
 
 ## ✨ 主要功能
 
@@ -13,223 +15,107 @@
 - 📉 **技术分析图表** - K线图、成交量、RSI、MACD、布林带等多种技术指标
 - 🔮 **价格预测** - 基于随机森林的机器学习价格预测
 - ⚠️ **风险警报** - 智能风险评估和实时预警系统
-- 📊 **历史数据分析** - 灵活的历史数据查询和统计分析
-- 💾 **MySQL 数据库** - 生产级数据持久化（自动保留最近一年数据）
+- 📊 **历史数据分析** - 灵活的历史数据查询和统计分析（自动保留最近一年数据）
+- 💾 **MySQL 数据库** - 生产级数据持久化
 - 🔌 **离线模式** - 无网络时自动降级使用历史数据
-- 🎨 **响应式界面** - 基于 Vue 3 和 Bootstrap 5 的现代化 UI
-
-## 🛠 技术栈
-
-| 分类 | 技术 |
-|------|------|
-| **后端** | Flask 3.0, Python 3.8+, MySQL 5.7+ |
-| **数据处理** | Pandas, NumPy, Scikit-learn |
-| **前端** | Vue 3, Vue Router 4, ECharts 6, Bootstrap 5 |
-| **数据源** | CoinGecko API |
-| **部署** | Gunicorn, Nginx (可选) |
-
-## 📋 系统要求
-
-### 必需
-- **Python** 3.8 或更高版本
-- **Node.js** 14 或更高版本（含 npm）
-- **MySQL** 5.7 或更高版本（推荐使用 Anaconda MySQL）
-
-### 推荐配置
-- **操作系统**: macOS / Linux / Windows 10+
-- **内存**: 4GB RAM 或更高
-- **磁盘空间**: 至少 500MB 可用空间
+- 🐳 **Docker 部署** - 一键启动，跨平台兼容（Windows/macOS/Linux）
 
 ---
 
-## 🚀 完整部署指南
+## 🚀 快速开始
 
-### 第一步：克隆项目
+### 前置要求
+
+只需要安装 Docker:
+
+- **Docker Desktop**: [下载地址](https://docs.docker.com/get-docker/)
+  - Windows: [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/)
+  - macOS: [Docker Desktop for Mac](https://docs.docker.com/desktop/install/mac-install/)
+  - Linux: [Docker Engine](https://docs.docker.com/engine/install/)
+
+> 💡 **提示**: Docker Desktop 已包含 Docker Compose，无需单独安装。
+
+---
+
+### 三步部署
+
+#### 1️⃣ 克隆项目
 
 ```bash
 git clone https://github.com/fallingnight131/btc_analysis_platform.git
 cd btc_analysis_platform
 ```
 
-### 第二步：MySQL 数据库安装与配置
-
-#### 选项 A：使用 Anaconda MySQL（推荐）
-
-如果你已安装 Anaconda，可以直接使用：
+#### 2️⃣ 一键启动
 
 **macOS/Linux:**
 ```bash
-# 1. 启动 MySQL
-cd backend
-bash scripts/start_mysql.sh
-
-# 2. 设置密码（首次启动需要）
-/opt/anaconda3/bin/mysql -u root
-
-# 在 MySQL 命令行中执行：
-ALTER USER 'root'@'localhost' IDENTIFIED BY 'bitcoin123';
-CREATE DATABASE IF NOT EXISTS bitcoin_db;
-CREATE USER IF NOT EXISTS 'bitcoin_user'@'localhost' IDENTIFIED BY 'bitcoin123';
-GRANT ALL PRIVILEGES ON bitcoin_db.* TO 'bitcoin_user'@'localhost';
-FLUSH PRIVILEGES;
-EXIT;
+bash docker-start.sh
 ```
 
 **Windows:**
 ```cmd
-REM 1. 启动 MySQL（会自动检测系统 MySQL 或 Anaconda MySQL）
-cd backend
-scripts\start_mysql.bat
-
-REM 2. 设置密码（首次启动需要）
-REM 如果使用系统 MySQL:
-mysql -u root
-
-REM 如果使用 Anaconda MySQL:
-C:\ProgramData\Anaconda3\Library\bin\mysql.exe -u root
-
-REM 在 MySQL 命令行中执行：
-ALTER USER 'root'@'localhost' IDENTIFIED BY 'bitcoin123';
-CREATE DATABASE IF NOT EXISTS bitcoin_db;
-CREATE USER IF NOT EXISTS 'bitcoin_user'@'localhost' IDENTIFIED BY 'bitcoin123';
-GRANT ALL PRIVILEGES ON bitcoin_db.* TO 'bitcoin_user'@'localhost';
-FLUSH PRIVILEGES;
-EXIT;
+docker-start.bat
 ```
 
-> 💡 **Windows 提示**: `start_mysql.bat` 会自动检测你的 MySQL 安装位置（系统 MySQL 或 Anaconda MySQL），无需手动配置。
-
-#### 选项 B：使用系统 MySQL
-
-**macOS (使用 Homebrew):**
+或者手动执行:
 ```bash
-# 安装 MySQL
-brew install mysql
-
-# 启动 MySQL
-brew services start mysql
-
-# 安全配置
-mysql_secure_installation
-
-# 创建数据库和用户
-mysql -u root -p
+docker-compose up -d --build
 ```
 
-**Ubuntu/Debian:**
-```bash
-sudo apt update
-sudo apt install mysql-server
-sudo systemctl start mysql
-sudo mysql_secure_installation
-mysql -u root -p
-```
+#### 3️⃣ 访问应用
 
-**Windows:**
-```cmd
-REM 下载 MySQL Installer
-REM https://dev.mysql.com/downloads/installer/
+启动完成后（约 2-3 分钟），在浏览器中打开:
 
-REM 或使用 Chocolatey
-choco install mysql
+- 🌐 **前端界面**: http://localhost:8080
+- 🔌 **后端 API**: http://localhost:5001
+- 🗄️ **MySQL 数据库**: localhost:3306
 
-REM 启动 MySQL 服务
-net start MySQL
+🎉 **恭喜！你已经成功部署了比特币分析平台！**
 
-REM 连接 MySQL
-mysql -u root -p
-```
+---
 
-**在 MySQL 中执行：**
-```sql
-CREATE DATABASE bitcoin_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'bitcoin_user'@'localhost' IDENTIFIED BY 'bitcoin123';
-GRANT ALL PRIVILEGES ON bitcoin_db.* TO 'bitcoin_user'@'localhost';
-FLUSH PRIVILEGES;
-EXIT;
-```
+## 🐳 Docker 管理
 
-### 第三步：后端设置
-
-#### 1. 创建 Python 虚拟环境（推荐）
+### 常用命令
 
 ```bash
-cd backend
+# 启动所有服务
+docker-compose up -d
 
-# 使用 venv
-python3 -m venv venv
-source venv/bin/activate  # macOS/Linux
-# 或
-# venv\Scripts\activate  # Windows
+# 查看服务状态
+docker-compose ps
 
-# 或使用 conda
-conda create -n btc_analysis_platform python=3.11
-conda activate btc_analysis_platform
+# 查看日志（所有服务）
+docker-compose logs -f
+
+# 查看特定服务日志
+docker-compose logs -f backend
+docker-compose logs -f frontend
+docker-compose logs -f mysql
+
+# 停止服务
+docker-compose down
+
+# 重启服务
+docker-compose restart
+
+# 重新构建并启动
+docker-compose up -d --build
+
+# 完全清理（包括数据卷）
+docker-compose down -v
 ```
 
-#### 2. 安装 Python 依赖
+### 服务架构
 
-```bash
-pip install -r requirements.txt
-```
+项目包含 3 个 Docker 服务:
 
-#### 3. 验证数据库连接
-
-```bash
-# 测试 MySQL 连接
-python tests/test_mysql_connection.py
-
-# 查看数据库状态
-python tests/check_db_status.py
-```
-
-#### 4. 启动后端服务
-
-```bash
-python app.py
-```
-
-成功启动后会看到：
-```
-✅ MySQL 数据库初始化成功
- * Running on http://127.0.0.1:5001
-```
-
-> 💡 **提示**: 后端会自动创建数据库表，首次启动时会进行初始化。
-
-### 第四步：前端设置
-
-打开**新的终端窗口**：
-
-#### 1. 安装 Node.js 依赖
-
-```bash
-cd frontend
-npm install
-```
-
-如果 `npm install` 速度慢，可以使用国内镜像：
-```bash
-npm install --registry=https://registry.npmmirror.com
-```
-
-#### 2. 启动前端开发服务器
-
-```bash
-npm run serve
-```
-
-成功启动后会看到：
-```
-  App running at:
-  - Local:   http://localhost:8080/
-```
-
-### 第五步：访问应用
-
-在浏览器中打开：**http://localhost:8080**
-
-🎉 恭喜！你已经成功部署了比特币分析平台！
+| 服务 | 容器名 | 端口 | 说明 |
+|------|--------|------|------|
+| **MySQL** | `btc-mysql` | 3306 | 数据库服务（MySQL 8.0） |
+| **Backend** | `btc-backend` | 5001 | Flask API 服务（Python 3.11） |
+| **Frontend** | `btc-frontend` | 8080 | Vue 3 + Nginx 静态服务 |
 
 ---
 
@@ -237,49 +123,51 @@ npm run serve
 
 ```
 btc_analysis_platform/
-├── backend/                    # 后端代码
-│   ├── app.py                 # Flask 应用入口
-│   ├── routes.py              # API 路由定义
-│   ├── api.py                 # CoinGecko API 集成
-│   ├── database.py            # MySQL 数据库管理
-│   ├── cache.py               # 缓存管理
-│   ├── utils.py               # 工具函数（技术指标计算）
-│   ├── requirements.txt       # Python 依赖
-│   ├── data/                  # 数据库数据目录
-│   │   └── mysql/            # MySQL 数据文件
-│   ├── scripts/               # MySQL 管理脚本
-│   │   ├── start_mysql.sh    # 启动 MySQL
-│   │   ├── stop_mysql.sh     # 停止 MySQL
-│   │   └── check_mysql.sh    # 检查状态
-│   └── tests/                 # 测试脚本
-│       ├── check_db_status.py    # 数据库状态检查
-│       └── test_mysql_connection.py
-├── frontend/                   # 前端代码
-│   ├── src/
-│   │   ├── views/            # 页面组件
-│   │   │   ├── Dashboard.vue  # 仪表盘
-│   │   │   ├── Analysis.vue   # 技术分析
-│   │   │   ├── History.vue    # 历史数据
-│   │   │   ├── Trading.vue    # 模拟交易
-│   │   │   └── Settings.vue   # 设置
-│   │   ├── components/        # UI 组件
-│   │   └── router/           # 路由配置
-│   ├── package.json          # npm 依赖
-│   └── vue.config.js         # Vue 配置
-└── README.md                  # 本文档
+├── docker-compose.yml         # Docker 编排配置
+├── .dockerignore             # Docker 构建忽略
+├── .gitignore                # Git 忽略配置
+├── .env.example              # 环境变量模板
+├── docker-start.sh           # 启动脚本 (macOS/Linux)
+├── docker-start.bat          # 启动脚本 (Windows)
+│
+├── README.md                  # 📖 项目文档（用户部署）
+├── QUICKSTART.md             # 🚀 快速开始指南
+├── CONTRIBUTING.md           # 🤝 开发者贡献指南
+├── LICENSE                   # 📄 MIT 开源协议
+│
+├── backend/                   # 后端服务
+│   ├── Dockerfile            # 后端 Docker 镜像
+│   ├── app.py                # Flask 应用入口
+│   ├── routes.py             # API 路由
+│   ├── api.py                # CoinGecko API 集成
+│   ├── database.py           # MySQL 数据库管理
+│   ├── cache.py              # 缓存管理
+│   ├── utils.py              # 工具函数（技术指标）
+│   ├── requirements.txt      # Python 依赖
+│   └── data/                 # 数据目录（Docker 卷挂载）
+│
+└── frontend/                  # 前端服务
+    ├── Dockerfile            # 前端 Docker 镜像
+    ├── nginx.conf            # Nginx 配置
+    ├── src/                  # Vue 3 源码
+    │   ├── views/           # 页面组件
+    │   ├── components/      # UI 组件
+    │   └── router/          # 路由配置
+    ├── package.json          # npm 依赖
+    └── vue.config.js         # Vue 配置
 ```
 
 ---
 
 ## 🔌 API 端点
 
-后端提供以下 RESTful API 接口：
+后端提供以下 RESTful API:
 
 | 端点 | 方法 | 描述 |
 |------|------|------|
 | `/api/health` | GET | 健康检查 |
 | `/api/realtime` | GET | 获取实时价格和市场数据 |
-| `/api/historical?days=7` | GET | 获取历史数据（支持 7/30/90/365 天） |
+| `/api/historical?days=7` | GET | 获取历史数据（7/30/90/365天） |
 | `/api/statistics?days=7` | GET | 获取统计数据 |
 | `/api/prediction` | GET | 获取价格预测 |
 | `/api/risk-alerts` | GET | 获取风险警报 |
@@ -288,6 +176,9 @@ btc_analysis_platform/
 ### 示例请求
 
 ```bash
+# 健康检查
+curl http://localhost:5001/api/health
+
 # 获取实时数据
 curl http://localhost:5001/api/realtime
 
@@ -300,257 +191,231 @@ curl http://localhost:5001/api/prediction
 
 ---
 
-## 🔧 常用命令
+## 🛠 技术栈
 
-### 后端管理
+### 后端
+- **Flask 3.0** - Python Web 框架
+- **MySQL 8.0** - 关系型数据库
+- **Pandas** - 数据处理
+- **Scikit-learn** - 机器学习（价格预测）
+- **CoinGecko API** - 加密货币数据源
 
-**macOS/Linux:**
-```bash
-cd backend
+### 前端
+- **Vue 3** - 渐进式 JavaScript 框架
+- **Vue Router 4** - 路由管理
+- **ECharts 6** - 数据可视化
+- **Bootstrap 5** - UI 框架
+- **Nginx** - Web 服务器（生产环境）
 
-# 启动后端
-python app.py
+### 部署
+- **Docker** - 容器化
+- **Docker Compose** - 多容器编排
 
-# 查看数据库状态
-python tests/check_db_status.py
+---
 
-# MySQL 管理
-bash scripts/start_mysql.sh      # 启动 MySQL
-bash scripts/stop_mysql.sh       # 停止 MySQL
-bash scripts/check_mysql.sh      # 检查状态
-bash scripts/restart_mysql.sh    # 重启 MySQL
-```
+## 📊 数据库说明
 
-**Windows:**
-```cmd
-cd backend
+### 自动数据保留策略
 
-REM 启动后端
-python app.py
+- 数据库**自动保留最近 365 天**的历史数据
+- 查询超过 1 年的数据时，会实时从 CoinGecko API 获取（不写入数据库）
+- 每次保存新数据时会自动清理过期数据（>365天）
+- 数据存储在 Docker 卷 `mysql_data` 中，持久化保存
 
-REM 查看数据库状态
-python tests\check_db_status.py
-
-REM MySQL 管理
-scripts\start_mysql.bat       REM 启动 MySQL
-scripts\stop_mysql.bat        REM 停止 MySQL
-scripts\check_mysql.bat       REM 检查状态
-scripts\restart_mysql.bat     REM 重启 MySQL
-```
-
-### 前端开发
+### 数据备份与恢复
 
 ```bash
-cd frontend
+# 备份数据库
+docker exec btc-mysql mysqldump -u root -pbitcoin123 bitcoin_db > backup.sql
 
-# 开发模式（热重载）
-npm run serve
+# 恢复数据库
+docker exec -i btc-mysql mysql -u root -pbitcoin123 bitcoin_db < backup.sql
 
-# 构建生产版本
-npm run build
-
-# 代码检查
-npm run lint
+# 备份数据卷
+docker run --rm -v btc_analysis_platform_mysql_data:/data -v $(pwd):/backup \
+  alpine tar czf /backup/mysql_backup.tar.gz /data
 ```
 
 ---
 
 ## 🐛 常见问题
 
-### 1. MySQL 连接失败
+### 1. Docker 服务启动失败
 
-**错误**: `Can't connect to MySQL server`
+**问题**: `docker-compose up` 报错
 
 **解决方法**:
 ```bash
-# 检查 MySQL 是否运行
-bash backend/scripts/check_mysql.sh
+# 检查 Docker 是否运行
+docker info
 
-# 如果未运行，启动 MySQL
-bash backend/scripts/start_mysql.sh
+# 查看详细日志
+docker-compose logs
 
-# 检查端口是否被占用
-lsof -i :3306
+# 完全重建
+docker-compose down -v
+docker-compose up -d --build
 ```
 
 ### 2. 端口被占用
 
-**错误**: `Address already in use`
+**问题**: `Bind for 0.0.0.0:8080 failed: port is already allocated`
 
 **解决方法**:
 ```bash
-# 查找占用端口的进程
-lsof -i :5001   # 后端端口
-lsof -i :8080   # 前端端口
+# 修改 docker-compose.yml 中的端口映射
+# 例如将 "8080:80" 改为 "8081:80"
+```
 
-# 杀死进程
+或者停止占用端口的服务:
+```bash
+# macOS/Linux
+lsof -i :8080
 kill -9 <PID>
 
-# 或修改端口号
-# 后端: 在 backend/app.py 中修改 port=5001
-# 前端: 在 frontend/vue.config.js 中修改 devServer.port
+# Windows
+netstat -ano | findstr :8080
+taskkill /PID <PID> /F
 ```
 
-### 3. API 请求 429 错误（限流）
-
-**原因**: CoinGecko 免费 API 有请求频率限制
-
-**解决方法**:
-- 系统已实现缓存机制（30 分钟）
-- API 失败时自动降级到数据库
-- 建议等待几分钟后重试
-
-### 4. 前端页面空白
+### 3. 前端页面空白
 
 **可能原因**:
-1. 后端未启动
-2. API 地址配置错误
+- 后端服务未就绪
+- API 连接失败
 
 **解决方法**:
 ```bash
-# 1. 确认后端运行
+# 1. 检查所有服务状态
+docker-compose ps
+
+# 2. 查看后端日志
+docker-compose logs backend
+
+# 3. 测试 API 连接
 curl http://localhost:5001/api/health
 
-# 2. 检查浏览器控制台错误
-# 3. 清除浏览器缓存并刷新
+# 4. 重启服务
+docker-compose restart
 ```
 
-### 5. npm install 失败
+### 4. 数据库连接失败
+
+**问题**: 后端日志显示 MySQL 连接错误
 
 **解决方法**:
 ```bash
-# 清除缓存
-rm -rf node_modules package-lock.json
-npm cache clean --force
+# 1. 等待 MySQL 完全启动（首次启动需要 30-60 秒）
+docker-compose logs mysql
 
-# 使用国内镜像
-npm install --registry=https://registry.npmmirror.com
+# 2. 检查 MySQL 健康状态
+docker-compose ps
 
-# 或使用 cnpm
-npm install -g cnpm --registry=https://registry.npmmirror.com
-cnpm install
+# 3. 手动重启后端（等 MySQL 就绪后）
+docker-compose restart backend
 ```
 
-### 6. Python 依赖安装失败
+### 5. API 返回 429 错误
 
-**解决方法**:
+**原因**: CoinGecko 免费 API 有请求频率限制（50次/分钟）
+
+**解决方案**:
+- 系统已实现 30 分钟缓存机制
+- API 失败时自动降级到数据库历史数据
+- 建议等待几分钟后重试
+
+---
+
+## 🔧 开发调试
+
+### 查看实时日志
+
 ```bash
-# 升级 pip
-pip install --upgrade pip
+# 所有服务
+docker-compose logs -f
 
-# 分别安装可能有问题的包
-pip install numpy
-pip install pandas
-pip install scikit-learn
+# 只看后端
+docker-compose logs -f backend
 
-# 重试
-pip install -r requirements.txt
+# 只看前端
+docker-compose logs -f frontend
+
+# 只看 MySQL
+docker-compose logs -f mysql
+```
+
+### 进入容器内部
+
+```bash
+# 进入后端容器
+docker-compose exec backend bash
+
+# 进入前端容器
+docker-compose exec frontend sh
+
+# 进入 MySQL 容器
+docker-compose exec mysql bash
+
+# 连接 MySQL 数据库
+docker-compose exec mysql mysql -u bitcoin_user -pbitcoin123 bitcoin_db
+```
+
+### 修改代码后重新构建
+
+```bash
+# 只重建后端
+docker-compose up -d --build backend
+
+# 只重建前端
+docker-compose up -d --build frontend
+
+# 重建所有服务
+docker-compose up -d --build
 ```
 
 ---
 
-## 📊 数据库说明
+## 🚀 生产环境部署
 
-### 数据保留策略
+### 使用 HTTPS
 
-- 数据库**自动保留最近 365 天**的数据
-- 查询超过 1 年的数据时，会实时从 API 获取（不写入数据库）
-- 每次保存新数据时会自动清理过期数据
+1. 修改 `docker-compose.yml`，添加 Nginx 反向代理
+2. 配置 SSL 证书（Let's Encrypt 推荐）
+3. 更新前端 API 地址为 HTTPS
 
-### 数据备份
+### 性能优化建议
+
+- **MySQL**: 调整 `docker-compose.yml` 中的内存限制
+- **后端**: 增加 Gunicorn worker 数量（修改 `backend/Dockerfile`）
+- **前端**: 已使用 Nginx + Gzip 压缩，生产就绪
+
+### 监控与日志
 
 ```bash
-# 备份数据库
-tar -czf mysql_backup_$(date +%Y%m%d).tar.gz backend/data/mysql/
+# 实时监控资源使用
+docker stats
 
-# 恢复数据库
-# 1. 停止 MySQL
-bash backend/scripts/stop_mysql.sh
-
-# 2. 删除旧数据
-rm -rf backend/data/mysql
-
-# 3. 解压备份
-tar -xzf mysql_backup_YYYYMMDD.tar.gz
-
-# 4. 启动 MySQL
-bash backend/scripts/start_mysql.sh
+# 导出日志到文件
+docker-compose logs > app.log
 ```
 
 ---
 
-## 🏗 生产环境部署
-
-### 使用 Gunicorn（推荐）
-
-```bash
-cd backend
-
-# 安装 Gunicorn
-pip install gunicorn
-
-# 启动（4个工作进程）
-gunicorn -w 4 -b 0.0.0.0:5001 "app:app"
-```
-
-### 使用 Nginx 反向代理
-
-创建 Nginx 配置 `/etc/nginx/sites-available/btc-platform`:
-
-```nginx
-server {
-    listen 80;
-    server_name your-domain.com;
-
-    # 前端静态文件
-    location / {
-        root /path/to/frontend/dist;
-        try_files $uri $uri/ /index.html;
-    }
-
-    # 后端 API 代理
-    location /api {
-        proxy_pass http://localhost:5001;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-}
-```
-
-启用配置：
-```bash
-sudo ln -s /etc/nginx/sites-available/btc-platform /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl restart nginx
-```
-
-### 使用 Docker（可选）
-
-```bash
-# 构建后端镜像
-cd backend
-docker build -t btc-backend .
-
-# 构建前端镜像
-cd ../frontend
-docker build -t btc-frontend .
-
-# 使用 docker-compose
-cd ..
-docker-compose up -d
-```
-
----
-
-## 🤝 贡献
+## 🤝 贡献指南
 
 欢迎提交 Issue 和 Pull Request！
+
+1. Fork 本项目
+2. 创建你的功能分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交你的更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 打开一个 Pull Request
 
 ---
 
 ## 📄 开源协议
 
-MIT License
+本项目采用 MIT License - 详见 [LICENSE](LICENSE) 文件
 
 ---
 
@@ -563,10 +428,11 @@ MIT License
 
 ## 🙏 致谢
 
-- [CoinGecko API](https://www.coingecko.com/api) - 提供免费的加密货币数据
+- [CoinGecko API](https://www.coingecko.com/api) - 免费的加密货币数据
 - [Vue.js](https://vuejs.org/) - 渐进式 JavaScript 框架
-- [Flask](https://flask.palletsprojects.com/) - 轻量级 Web 框架
+- [Flask](https://flask.palletsprojects.com/) - 轻量级 Python Web 框架
 - [ECharts](https://echarts.apache.org/) - 强大的数据可视化库
+- [Docker](https://www.docker.com/) - 容器化平台
 
 ---
 
