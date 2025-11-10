@@ -57,6 +57,7 @@ cd btc_analysis_platform
 
 如果你已安装 Anaconda，可以直接使用：
 
+**macOS/Linux:**
 ```bash
 # 1. 启动 MySQL
 cd backend
@@ -66,6 +67,24 @@ bash scripts/start_mysql.sh
 /opt/anaconda3/bin/mysql -u root
 
 # 在 MySQL 命令行中执行：
+ALTER USER 'root'@'localhost' IDENTIFIED BY 'bitcoin123';
+CREATE DATABASE IF NOT EXISTS bitcoin_db;
+CREATE USER IF NOT EXISTS 'bitcoin_user'@'localhost' IDENTIFIED BY 'bitcoin123';
+GRANT ALL PRIVILEGES ON bitcoin_db.* TO 'bitcoin_user'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+```
+
+**Windows:**
+```cmd
+REM 1. 启动 MySQL
+cd backend
+scripts\start_mysql.bat
+
+REM 2. 设置密码（首次启动需要）
+C:\ProgramData\Anaconda3\Library\bin\mysql.exe -u root
+
+REM 在 MySQL 命令行中执行：
 ALTER USER 'root'@'localhost' IDENTIFIED BY 'bitcoin123';
 CREATE DATABASE IF NOT EXISTS bitcoin_db;
 CREATE USER IF NOT EXISTS 'bitcoin_user'@'localhost' IDENTIFIED BY 'bitcoin123';
@@ -97,6 +116,21 @@ sudo apt update
 sudo apt install mysql-server
 sudo systemctl start mysql
 sudo mysql_secure_installation
+mysql -u root -p
+```
+
+**Windows:**
+```cmd
+REM 下载 MySQL Installer
+REM https://dev.mysql.com/downloads/installer/
+
+REM 或使用 Chocolatey
+choco install mysql
+
+REM 启动 MySQL 服务
+net start MySQL
+
+REM 连接 MySQL
 mysql -u root -p
 ```
 
@@ -264,6 +298,7 @@ curl http://localhost:5001/api/prediction
 
 ### 后端管理
 
+**macOS/Linux:**
 ```bash
 cd backend
 
@@ -278,6 +313,23 @@ bash scripts/start_mysql.sh      # 启动 MySQL
 bash scripts/stop_mysql.sh       # 停止 MySQL
 bash scripts/check_mysql.sh      # 检查状态
 bash scripts/restart_mysql.sh    # 重启 MySQL
+```
+
+**Windows:**
+```cmd
+cd backend
+
+REM 启动后端
+python app.py
+
+REM 查看数据库状态
+python tests\check_db_status.py
+
+REM MySQL 管理
+scripts\start_mysql.bat       REM 启动 MySQL
+scripts\stop_mysql.bat        REM 停止 MySQL
+scripts\check_mysql.bat       REM 检查状态
+scripts\restart_mysql.bat     REM 重启 MySQL
 ```
 
 ### 前端开发

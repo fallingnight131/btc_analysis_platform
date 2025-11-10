@@ -5,10 +5,18 @@
 ## 脚本说明
 
 ### 启动/停止脚本
+
+**macOS/Linux:**
 - `start_mysql.sh` - 启动 MySQL 服务
 - `stop_mysql.sh` - 停止 MySQL 服务
 - `restart_mysql.sh` - 重启 MySQL 服务
 - `check_mysql.sh` - 检查 MySQL 服务状态
+
+**Windows:**
+- `start_mysql.bat` - 启动 MySQL 服务
+- `stop_mysql.bat` - 停止 MySQL 服务
+- `restart_mysql.bat` - 重启 MySQL 服务
+- `check_mysql.bat` - 检查 MySQL 服务状态
 
 ### 初始化脚本
 - `init_mysql.sql` - 数据库初始化 SQL 脚本
@@ -20,6 +28,7 @@
 
 ## 使用方法
 
+**macOS/Linux:**
 ```bash
 # 从 backend 目录运行
 cd backend
@@ -34,8 +43,24 @@ bash scripts/check_mysql.sh
 bash scripts/stop_mysql.sh
 ```
 
+**Windows:**
+```cmd
+REM 从 backend 目录运行
+cd backend
+
+REM 启动 MySQL
+scripts\start_mysql.bat
+
+REM 检查状态
+scripts\check_mysql.bat
+
+REM 停止 MySQL
+scripts\stop_mysql.bat
+```
+
 ## 注意事项
 
-- 这些脚本使用 Anaconda 提供的 MySQL（位于 `/opt/anaconda3/bin/`）
+- **macOS/Linux**: 脚本使用 Anaconda 提供的 MySQL（位于 `/opt/anaconda3/bin/`）
+- **Windows**: 脚本使用 Anaconda 提供的 MySQL（位于 `C:\ProgramData\Anaconda3\Library\bin\`）
 - 数据存储在 `backend/data/mysql`
-- 日志文件位于 `/tmp/mysql.log`
+- 日志文件位于 `/tmp/mysql.log` (macOS/Linux) 或 `%TEMP%\mysql.log` (Windows)
