@@ -185,6 +185,7 @@
 
 <script>
 import axios from 'axios'
+import { convertTimestampsShort } from './utils/timeUtils'
 
 export default {
   name: 'App',
@@ -320,7 +321,12 @@ export default {
         const response = await axios.get(`${this.apiBaseUrl}/historical?days=7`)
         if (response.data.success && response.data.data) {
           if (response.data.data.timestamps && response.data.data.timestamps.length > 0) {
-            Object.assign(this.historicalData, response.data.data)
+            // 转换UTC时间为北京时间
+            const beijingTimestamps = convertTimestampsShort(response.data.data.timestamps)
+            Object.assign(this.historicalData, {
+              ...response.data.data,
+              timestamps: beijingTimestamps
+            })
           }
         }
       } catch (error) {
@@ -332,7 +338,12 @@ export default {
       try {
         const response = await axios.get(`${this.apiBaseUrl}/candlestick?days=30`)
         if (response.data.success) {
-          Object.assign(this.candlestickData, response.data.data)
+          // 转换UTC时间为北京时间
+          const beijingDates = convertTimestampsShort(response.data.data.dates || [])
+          Object.assign(this.candlestickData, {
+            ...response.data.data,
+            dates: beijingDates
+          })
         }
       } catch (error) {
         console.error('Candlestick data error:', error)

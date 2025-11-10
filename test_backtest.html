@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>回测功能测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <h1>回测功能诊断测试</h1>
+    
+    <h2>步骤 1: 测试基础连接</h2>
+    <button onclick="testConnection()">测试后端连接</button>
+    <div id="connection-result"></div>
+    
+    <h2>步骤 2: 测试回测API</h2>
+    <button onclick="testBacktest()">测试回测功能</button>
+    <div id="backtest-result"></div>
+    
+    <h2>步骤 3: 测试Vue组件</h2>
+    <button onclick="testVueAxios()">测试Vue中的axios</button>
+    <div id="vue-result"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        // 配置axios
+        axios.defaults.baseURL = 'http://localhost:5001';
+        
+        function showResult(elementId, message, type) {
+            const el = document.getElementById(elementId);
+            el.innerHTML = `<div class="result ${type}">${message}</div>`;
+        }
+        
+        async function testConnection() {
+            try {
+                showResult('connection-result', '正在测试连接...', 'info');
+                const response = await axios.get('/api/health');
+                showResult('connection-result', 
+                    `✅ 连接成功!\n\n响应数据:\n${JSON.stringify(response.data, null, 2)}`,
+                    'success'
+                );
+            } catch (error) {
+                showResult('connection-result', 
+                    `❌ 连接失败!\n\n错误信息:\n${error.message}\n\n详细:\n${JSON.stringify(error, null, 2)}`,
+                    'error'
+                );
+            }
+        }
+        
+        async function testBacktest() {
+            try {
+                showResult('backtest-result', '正在运行回测...', 'info');
+                const response = await axios.post('/api/backtest', {
+                    strategy: 'ma_cross',
+                    params: {
+                        short_ma: 5,
+                        long_ma: 20
+                    },
+                    initial_capital: 10000,
+                    days: 90
+                });
+                
+                if (response.data.success) {
+                    const data = response.data.data;
+                    showResult('backtest-result', 
+                        `✅ 回测成功!\n\n` +
+                        `总收益率: ${data.totalReturn.toFixed(2)}%\n` +
+                        `年化收益: ${data.annualReturn.toFixed(2)}%\n` +
+                        `最大回撤: ${data.maxDrawdown.toFixed(2)}%\n` +
+                        `夏普比率: ${data.sharpeRatio.toFixed(2)}\n` +
+                        `总交易次数: ${data.totalTrades}\n` +
+                        `盈利交易: ${data.winningTrades}\n` +
+                        `胜率: ${data.winRate.toFixed(2)}%`,
+                        'success'
+                    );
+                } else {
+                    showResult('backtest-result', 
+                        `❌ 回测失败: ${response.data.message}`,
+                        'error'
+                    );
+                }
+            } catch (error) {
+                showResult('backtest-result', 
+                    `❌ 请求失败!\n\n错误信息:\n${error.message}\n\n` +
+                    `状态码: ${error.response?.status || 'N/A'}\n` +
+                    `响应数据:\n${JSON.stringify(error.response?.data, null, 2) || 'N/A'}`,
+                    'error'
+                );
+            }
+        }
+        
+        async function testVueAxios() {
+            try {
+                showResult('vue-result', '检查Vue组件配置...', 'info');
+                
+                // 模拟Vue组件中的axios使用方式
+                const mockVue = {
+                    $axios: axios
+                };
+                
+                const response = await mockVue.$axios.post('/api/backtest', {
+                    strategy: 'ma_cross',
+                    params: {
+                        short_ma: 5,
+                        long_ma: 20
+                    },
+                    initial_capital: 10000,
+                    days: 90
+                });
+                
+                showResult('vue-result', 
+                    `✅ Vue方式调用成功!\n\n` +
+                    `this.$axios.post() 可以正常工作\n` +
+                    `收益率: ${response.data.data.totalReturn.toFixed(2)}%`,
+                    'success'
+                );
+            } catch (error) {
+                showResult('vue-result', 
+                    `❌ Vue方式调用失败!\n\n${error.message}`,
+                    'error'
+                );
+            }
+        }
+    </script>
+</body>
+</html>

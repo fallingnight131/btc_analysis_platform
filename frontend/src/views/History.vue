@@ -221,6 +221,7 @@
 <script>
 import * as echarts from 'echarts'
 import axios from 'axios'
+import { utcToBeijing } from '../utils/timeUtils'
 
 export default {
   name: 'HistoryView',
@@ -230,8 +231,8 @@ export default {
   },
   data() {
     return {
-      startDate: this.getDateStr(-30),
-      endDate: this.getDateStr(0),
+      startDate: this.getBeijingDateStr(-30),
+      endDate: this.getBeijingDateStr(0),
       granularity: '1h',
       dataType: 'ohlcv',
       loading: false,
@@ -242,8 +243,8 @@ export default {
       currentPage: 1,
       pageSize: 50,
       apiBaseUrl: 'http://localhost:5001/api',
-      todayDate: this.getDateStr(0),  // 今天日期
-      minDate: this.getDateStr(-365),  // 最早可选一年前
+      todayDate: this.getBeijingDateStr(0),  // 今天日期(北京时间)
+      minDate: this.getBeijingDateStr(-365),  // 最早可选一年前
     }
   },
   computed: {
@@ -270,16 +271,25 @@ export default {
     }
   },
   methods: {
+    getBeijingDateStr(daysOffset) {
+      // 获取北京时间的日期字符串 (YYYY-MM-DD)
+      const date = new Date()
+      date.setDate(date.getDate() + daysOffset)
+      // 转换为北京时间 (UTC+8)
+      const beijingDate = new Date(date.toLocaleString('en-US', { timeZone: 'Asia/Shanghai' }))
+      return beijingDate.toISOString().split('T')[0]
+    },
     getDateStr(daysOffset) {
+      // 保留这个方法以兼容其他可能的用途
       const date = new Date()
       date.setDate(date.getDate() + daysOffset)
       return date.toISOString().split('T')[0]
     },
     selectRange(days) {
-      this.endDate = this.getDateStr(0)
-      this.startDate = this.getDateStr(-days)
+      this.endDate = this.getBeijingDateStr(0)
+      this.startDate = this.getBeijingDateStr(-days)
       // 确保开始日期不早于一年前
-      const oneYearAgo = this.getDateStr(-365)
+      const oneYearAgo = this.getBeijingDateStr(-365)
       if (this.startDate < oneYearAgo) {
         this.startDate = oneYearAgo
       }
@@ -317,7 +327,7 @@ export default {
           const low = Math.min(open, close)
           
           data.push({
-            time: timestamps[i] || new Date().toLocaleString('zh-CN'),
+            time: timestamps[i] ? utcToBeijing(timestamps[i]) : new Date().toLocaleString('zh-CN'),
             open,
             high,
             low,
