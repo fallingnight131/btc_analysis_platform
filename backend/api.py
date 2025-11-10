@@ -168,8 +168,8 @@ class BitcoinAPI:
             
             print(f"✅ 成功获取 {len(df)} 条数据")
             
-            # 保存到数据库
-            saved_count = db_manager.save_historical_data(df)
+            # 注意：不在这里保存到数据库，由定时任务统一管理数据持久化
+            # 避免每次API请求都写入数据库，导致数据库记录过多
             
             # 缓存数据
             cache_key = f'historical_{days}d'
