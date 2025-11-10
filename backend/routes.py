@@ -52,6 +52,10 @@ def register_routes(app):
             days = request.args.get('days', default=7, type=int)
             cache_key = f'historical_{days}d'
             
+            # 限制最多查询365天
+            if days > 365:
+                days = 365
+            
             # 检查缓存 - 1小时 (历史数据不需要频繁更新)
             days_requested = days
             if cache_manager.is_cache_valid(cache_key, max_age_seconds=3600):
@@ -59,31 +63,44 @@ def register_routes(app):
                 df = cache['data']
                 print(f"✅ 使用缓存的{days}天数据")
             else:
-                # 优先从数据库获取历史数据（更稳定，不会变化）
-                print(f"📊 从数据库获取{days}天历史数据")
-                df = db_manager.get_historical_data(days=min(days, 365))
-                
-                # 如果数据库没有足够数据，再尝试API
-                if df is None or df.empty or len(df) < days * 12:  # 每天至少12个数据点
-                    print(f"⚠️ 数据库数据不足，尝试API获取")
-                    df_api = BitcoinAPI.fetch_historical_data(days)
-                    if df_api is not None and not df_api.empty:
-                        df = df_api
-                    elif df is not None and not df.empty:
-                        # API失败，使用数据库的数据（即使不足）
-                        print(f"⚠️ API失败，使用数据库现有数据")
-                    else:
-                        # 如果还是失败，尝试返回旧的缓存数据
-                        cache = cache_manager.get_cache(cache_key)
-                        if cache['data'] is not None:
-                            print(f"⚠️ 返回旧缓存数据")
-                            df = cache['data']
+                # 对于30天以上的查询，优先使用数据库（小时级数据）
+                # 避免使用CoinGecko API返回的日级数据
+                if days >= 30:
+                    print(f"📊 查询{days}天，优先从数据库获取小时级数据")
+                    df = db_manager.get_historical_data(days=days)
+                    
+                    # 如果数据库数据不足，才考虑API（但会得到不同粒度的数据）
+                    if df is None or df.empty:
+                        print(f"⚠️ 数据库无数据，尝试API获取")
+                        df_api = BitcoinAPI.fetch_historical_data(days)
+                        if df_api is not None and not df_api.empty:
+                            df = df_api
+                else:
+                    # 30天以内，优先从数据库获取
+                    print(f"📊 从数据库获取{days}天历史数据")
+                    df = db_manager.get_historical_data(days=days)
+                    
+                    # 如果数据库没有足够数据，再尝试API
+                    if df is None or df.empty or len(df) < days * 12:  # 每天至少12个数据点
+                        print(f"⚠️ 数据库数据不足，尝试API获取")
+                        df_api = BitcoinAPI.fetch_historical_data(days)
+                        if df_api is not None and not df_api.empty:
+                            df = df_api
+                        elif df is not None and not df.empty:
+                            # API失败，使用数据库的数据（即使不足）
+                            print(f"⚠️ API失败，使用数据库现有数据")
                         else:
-                            return jsonify({
-                                'success': False,
-                                'message': 'No data available (offline mode)',
-                                'offline_mode': True
-                            }), 200  # 返回200而不是500
+                            # 如果还是失败，尝试返回旧的缓存数据
+                            cache = cache_manager.get_cache(cache_key)
+                            if cache['data'] is not None:
+                                print(f"⚠️ 返回旧缓存数据")
+                                df = cache['data']
+                            else:
+                                return jsonify({
+                                    'success': False,
+                                    'message': 'No data available (offline mode)',
+                                    'offline_mode': True
+                                }), 200  # 返回200而不是500
                 
                 if df is not None and not df.empty:
                     # 计算技术指标

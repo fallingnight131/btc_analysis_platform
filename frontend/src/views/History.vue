@@ -16,11 +16,11 @@
           <div class="row mt-3">
             <div class="col-md-3">
               <label class="form-label">开始日期</label>
-              <input type="date" class="form-control" v-model="startDate">
+              <input type="date" class="form-control" v-model="startDate" :min="minDate" :max="maxStartDate">
             </div>
             <div class="col-md-3">
               <label class="form-label">结束日期</label>
-              <input type="date" class="form-control" v-model="endDate">
+              <input type="date" class="form-control" v-model="endDate" :max="todayDate">
             </div>
             <div class="col-md-2">
               <label class="form-label">数据粒度</label>
@@ -241,7 +241,9 @@ export default {
       distributionChart: null,
       currentPage: 1,
       pageSize: 50,
-      apiBaseUrl: 'http://localhost:5001/api'
+      apiBaseUrl: 'http://localhost:5001/api',
+      todayDate: this.getDateStr(0),  // 今天日期
+      minDate: this.getDateStr(-365),  // 最早可选一年前
     }
   },
   computed: {
@@ -256,6 +258,10 @@ export default {
         pages.push(i)
       }
       return pages
+    },
+    maxStartDate() {
+      // 开始日期不能晚于结束日期
+      return this.endDate
     }
   },
   watch: {
@@ -270,8 +276,13 @@ export default {
       return date.toISOString().split('T')[0]
     },
     selectRange(days) {
-      this.startDate = this.getDateStr(-days)
       this.endDate = this.getDateStr(0)
+      this.startDate = this.getDateStr(-days)
+      // 确保开始日期不早于一年前
+      const oneYearAgo = this.getDateStr(-365)
+      if (this.startDate < oneYearAgo) {
+        this.startDate = oneYearAgo
+      }
     },
     async queryData() {
       this.loading = true
