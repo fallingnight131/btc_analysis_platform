@@ -13,11 +13,58 @@
 3. 重启电脑
 4. 启动 Docker Desktop
 
+**🇨🇳 中国大陆用户配置（强烈推荐）:**
+
+1. 打开 Docker Desktop → Settings (⚙️) → Docker Engine
+2. 在 JSON 配置中添加镜像加速器:
+```json
+{
+  "registry-mirrors": [
+    "https://docker.m.daocloud.io",
+    "https://dockerproxy.com",
+    "https://docker.nju.edu.cn"
+  ]
+}
+```
+3. 点击 "Apply & Restart"
+4. 等待重启完成（约 10-30 秒）
+
+> ⚡ 效果: 镜像下载速度提升 10-50 倍！
+
 ### macOS
 1. 下载 [Docker Desktop for Mac](https://docs.docker.com/desktop/install/mac-install/)
 2. 拖动到 Applications 文件夹
 3. 启动 Docker.app
 4. 等待 Docker 图标显示在菜单栏
+
+**⚙️ 安装后配置（必须）:**
+
+```bash
+# 将 Docker 命令添加到 PATH（永久生效）
+echo 'export PATH="/usr/local/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+
+# 验证 Docker 是否可用
+docker --version
+```
+
+**🇨🇳 中国大陆用户额外配置（强烈推荐）:**
+
+1. 打开 Docker Desktop → 设置 (⚙️) → Docker Engine
+2. 在 JSON 配置中添加镜像加速器:
+```json
+{
+  "registry-mirrors": [
+    "https://docker.m.daocloud.io",
+    "https://dockerproxy.com",
+    "https://docker.nju.edu.cn"
+  ]
+}
+```
+3. 点击 "Apply & Restart"
+4. 等待重启完成（约 10-30 秒）
+
+> ⚡ 效果: 镜像下载速度提升 10-50 倍，构建时间从 10 分钟缩短到 2-3 分钟！
 
 ### Linux (Ubuntu/Debian)
 ```bash
@@ -174,10 +221,23 @@ docker-compose down -v
 docker info
 ```
 
+### Docker 命令找不到 (macOS)
+```bash
+# 永久添加到 PATH
+echo 'export PATH="/usr/local/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+### 镜像下载慢或超时
+参考上面的 **"🇨🇳 中国大陆用户配置"** 配置镜像加速器。
+
 ### 查看详细错误
 ```bash
 docker-compose logs
 ```
+
+### 完整故障排查指南
+查看 **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** 获取详细解决方案。
 
 ---
 

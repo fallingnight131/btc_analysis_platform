@@ -4,20 +4,16 @@ FROM python:3.11-slim
 # 设置工作目录
 WORKDIR /app
 
-# 设置环境变量
+# 设置环境变量（非敏感信息）
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    MYSQL_HOST=mysql \
-    MYSQL_PORT=3306 \
-    MYSQL_USER=bitcoin_user \
-    MYSQL_PASSWORD=bitcoin123 \
-    MYSQL_DATABASE=bitcoin_db
+    PYTHONUNBUFFERED=1
 
-# 安装系统依赖
+# 安装系统依赖（包含 curl 用于健康检查）
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     default-libmysqlclient-dev \
     pkg-config \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # 复制依赖文件

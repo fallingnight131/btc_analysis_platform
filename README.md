@@ -37,6 +37,74 @@
 
 ---
 
+### ⚙️ 安装后配置（重要）
+
+#### macOS 用户 - PATH 配置
+
+如果安装 Docker Desktop 后,终端提示找不到 `docker` 命令,请执行以下操作:
+
+**临时解决**（当前终端会话有效）:
+```bash
+export PATH="/usr/local/bin:$PATH"
+```
+
+**永久解决**（推荐）:
+```bash
+# 将 Docker 路径添加到 shell 配置文件
+echo 'export PATH="/usr/local/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+> 💡 **说明**: Docker Desktop 会自动创建符号链接到 `/usr/local/bin/`,但某些终端配置可能不包含此路径。
+
+#### 🇨🇳 中国大陆用户 - 镜像加速器配置
+
+由于网络原因,拉取 Docker 镜像可能会很慢或超时。**强烈建议**配置镜像加速器:
+
+**配置步骤:**
+
+1. 打开 Docker Desktop
+2. 点击右上角 **设置图标** (⚙️)
+3. 选择 **Docker Engine**
+4. 在编辑器中找到 `"registry-mirrors"` 配置项,添加以下内容:
+
+```json
+{
+  "builder": {
+    "gc": {
+      "defaultKeepStorage": "20GB",
+      "enabled": true
+    }
+  },
+  "experimental": false,
+  "registry-mirrors": [
+    "https://docker.m.daocloud.io",
+    "https://dockerproxy.com",
+    "https://docker.nju.edu.cn"
+  ]
+}
+```
+
+5. 点击 **Apply & Restart** (应用并重启)
+6. 等待 Docker 重启完成（约 10-30 秒）
+
+**验证配置:**
+```bash
+docker info | grep -A 5 "Registry Mirrors"
+```
+
+应该看到类似输出:
+```
+Registry Mirrors:
+  https://docker.m.daocloud.io/
+  https://dockerproxy.com/
+  https://docker.nju.edu.cn/
+```
+
+> ⚡ **效果**: 配置后,镜像下载速度可提升 **10-50 倍**,构建时间从 10 分钟缩短到 2-3 分钟。
+
+---
+
 ### 三步部署
 
 #### 1️⃣ 克隆项目
@@ -410,6 +478,30 @@ docker-compose logs > app.log
 3. 提交你的更改 (`git commit -m 'Add some AmazingFeature'`)
 4. 推送到分支 (`git push origin feature/AmazingFeature`)
 5. 打开一个 Pull Request
+
+详见 [CONTRIBUTING.md](CONTRIBUTING.md)
+
+---
+
+## 🐛 故障排查
+
+遇到问题？查看 **[故障排查指南](TROUBLESHOOTING.md)**，包含:
+
+- ✅ Docker 安装配置（PATH、镜像加速器）
+- ✅ 容器健康检查失败
+- ✅ 网络和端口问题
+- ✅ 数据库连接问题
+- ✅ 磁盘空间管理
+- ✅ 完全重新部署步骤
+
+---
+
+## 📚 相关文档
+
+- 📖 [快速开始指南](QUICKSTART.md) - 5 分钟快速部署
+- 🔧 [故障排查指南](TROUBLESHOOTING.md) - 常见问题解决
+- 👨‍💻 [开发指南](CONTRIBUTING.md) - 本地开发和贡献
+- 📝 [优化总结](OPTIMIZATION_SUMMARY.md) - 项目优化历程
 
 ---
 
