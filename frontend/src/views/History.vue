@@ -274,49 +274,107 @@ export default {
     async queryData() {
       this.loading = true
       
-      // 模拟API请求
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      
-      // 生成模拟数据
-      const daysDiff = Math.ceil((new Date(this.endDate) - new Date(this.startDate)) / (1000 * 60 * 60 * 24))
-      const dataPoints = Math.min(daysDiff * 24, 720) // 最多720个数据点
-      
-      const data = []
-      let basePrice = this.statistics?.current_price || 70000
-      
-      for (let i = 0; i < dataPoints; i++) {
-        const change = (Math.random() - 0.5) * 0.02
-        const open = basePrice
-        const close = basePrice * (1 + change)
-        const high = Math.max(open, close) * (1 + Math.random() * 0.01)
-        const low = Math.min(open, close) * (1 - Math.random() * 0.01)
-        const volume = (Math.random() * 50000000 + 10000000)
+      try {
+        // 计算查询天数
+        const daysDiff = Math.ceil((new Date(this.endDate) - new Date(this.startDate)) / (1000 * 60 * 60 * 24))
         
-        const date = new Date(this.startDate)
-        date.setHours(date.getHours() + i)
+        // 调用真实API
+        const response = await axios.get(`${this.apiBaseUrl}/historical?days=${Math.max(daysDiff, 7)}`)
         
-        data.push({
-          time: date.toLocaleString('zh-CN'),
-          open,
-          high,
-          low,
-          close,
-          volume,
-          change: ((close - open) / open) * 100
+        if (!response.data.success) {
+          throw new Error('Failed to fetch data')
+        }
+        
+        const apiData = response.data.data
+        
+        // 转换API数据格式
+        const data = []
+        const prices = apiData.prices || []
+        const volumes = apiData.volumes || []
+        const timestamps = apiData.timestamps || []
+        
+        for (let i = 0; i < prices.length; i++) {
+          const open = i > 0 ? prices[i - 1] : prices[i]
+          const close = prices[i]
+          const high = Math.max(open, close) * (1 + Math.random() * 0.005)
+          const low = Math.min(open, close) * (1 - Math.random() * 0.005)
+          
+          data.push({
+            time: timestamps[i] || new Date().toLocaleString('zh-CN'),
+            open,
+            high,
+            low,
+            close,
+            volume: volumes[i] || 0,
+            change: i > 0 ? ((close - prices[i - 1]) / prices[i - 1]) * 100 : 0
+          })
+        }
+        
+        // 过滤日期范围
+        const startTime = new Date(this.startDate).getTime()
+        const endTime = new Date(this.endDate).getTime() + 24 * 60 * 60 * 1000
+        const filteredData = data.filter(d => {
+          const time = new Date(d.time).getTime()
+          return time >= startTime && time <= endTime
         })
         
-        basePrice = close
-      }
-      
-      this.queryResult = {
-        dataPoints,
-        highPrice: Math.max(...data.map(d => d.high)),
-        lowPrice: Math.min(...data.map(d => d.low)),
-        avgPrice: data.reduce((sum, d) => sum + d.close, 0) / data.length,
-        totalVolume: data.reduce((sum, d) => sum + d.volume, 0),
-        priceChange: ((data[data.length - 1].close - data[0].open) / data[0].open) * 100,
-        data: data.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize),
-        allData: data
+        const actualData = filteredData.length > 0 ? filteredData : data
+        
+        this.queryResult = {
+          dataPoints: actualData.length,
+          highPrice: Math.max(...actualData.map(d => d.high)),
+          lowPrice: Math.min(...actualData.map(d => d.low)),
+          avgPrice: actualData.reduce((sum, d) => sum + d.close, 0) / actualData.length,
+          totalVolume: actualData.reduce((sum, d) => sum + d.volume, 0),
+          priceChange: actualData.length > 1 ? ((actualData[actualData.length - 1].close - actualData[0].open) / actualData[0].open) * 100 : 0,
+          data: actualData.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize),
+          allData: actualData
+        }
+      } catch (error) {
+        console.error('Query data error:', error)
+        this.$emit('show-toast', '获取数据失败，显示模拟数据', 'warning')
+        
+        // 失败时使用模拟数据
+        const daysDiff = Math.ceil((new Date(this.endDate) - new Date(this.startDate)) / (1000 * 60 * 60 * 24))
+        const dataPoints = daysDiff * 24 // 移除720限制
+        
+        const data = []
+        let basePrice = this.statistics?.current_price || 70000
+        
+        for (let i = 0; i < dataPoints; i++) {
+          const change = (Math.random() - 0.5) * 0.02
+          const open = basePrice
+          const close = basePrice * (1 + change)
+          const high = Math.max(open, close) * (1 + Math.random() * 0.01)
+          const low = Math.min(open, close) * (1 - Math.random() * 0.01)
+          const volume = (Math.random() * 50000000 + 10000000)
+          
+          const date = new Date(this.startDate)
+          date.setHours(date.getHours() + i)
+          
+          data.push({
+            time: date.toLocaleString('zh-CN'),
+            open,
+            high,
+            low,
+            close,
+            volume,
+            change: ((close - open) / open) * 100
+          })
+          
+          basePrice = close
+        }
+        
+        this.queryResult = {
+          dataPoints,
+          highPrice: Math.max(...data.map(d => d.high)),
+          lowPrice: Math.min(...data.map(d => d.low)),
+          avgPrice: data.reduce((sum, d) => sum + d.close, 0) / data.length,
+          totalVolume: data.reduce((sum, d) => sum + d.volume, 0),
+          priceChange: ((data[data.length - 1].close - data[0].open) / data[0].open) * 100,
+          data: data.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize),
+          allData: data
+        }
       }
       
       this.loading = false

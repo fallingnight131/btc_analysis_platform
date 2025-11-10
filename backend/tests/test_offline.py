@@ -1,6 +1,11 @@
 """
 测试离线模式
 """
+import sys
+import os
+# 添加父目录到路径以便导入 backend 模块
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import time
 from database import db_manager
 from api import BitcoinAPI

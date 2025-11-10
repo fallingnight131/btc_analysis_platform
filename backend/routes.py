@@ -9,6 +9,7 @@ from sklearn.ensemble import RandomForestRegressor
 
 from api import BitcoinAPI
 from cache import cache_manager
+from database import db_manager
 from utils import (
     calculate_technical_indicators,
     prepare_prediction_features,
@@ -51,24 +52,31 @@ def register_routes(app):
             days = request.args.get('days', default=7, type=int)
             cache_key = f'historical_{days}d'
             
-            # 检查缓存 - 10分钟
-            if cache_manager.is_cache_valid(cache_key, max_age_seconds=600):
+            # 检查缓存 - 30分钟 (增加到30分钟以减少API调用)
+            days_requested = days
+            if cache_manager.is_cache_valid(cache_key, max_age_seconds=1800):
                 cache = cache_manager.get_cache(cache_key)
                 df = cache['data']
                 print(f"✅ 使用缓存的{days}天数据")
             else:
                 df = BitcoinAPI.fetch_historical_data(days)
                 if df is None or df.empty:
-                    # 如果获取失败，尝试返回旧的缓存数据
+                    # 直接从数据库获取（数据库只保留最近一年的数据）
+                    print(f"⚠️ API失败，尝试从数据库获取最近数据（数据库仅保留最近一年）")
+                    df = db_manager.get_historical_data(days=min(days, 365))
+                    
+                if df is None or df.empty:
+                    # 如果还是失败，尝试返回旧的缓存数据
                     cache = cache_manager.get_cache(cache_key)
                     if cache['data'] is not None:
-                        print(f"⚠️ 获取数据失败，返回旧缓存")
+                        print(f"⚠️ 数据库也无数据，返回旧缓存")
                         df = cache['data']
                     else:
                         return jsonify({
                             'success': False,
-                            'message': 'Failed to fetch historical data'
-                        }), 500
+                            'message': 'No data available (offline mode)',
+                            'offline_mode': True
+                        }), 200  # 返回200而不是500
                 else:
                     # 计算技术指标
                     df = calculate_technical_indicators(df)
@@ -102,11 +110,18 @@ def register_routes(app):
                 'volatility': df['volatility'].round(2).tolist()
             }
             
-            return jsonify({
+            response_payload = {
                 'success': True,
                 'data': result,
-                'cached': cache_manager.is_cache_valid(cache_key, max_age_seconds=600)
-            })
+                'cached': cache_manager.is_cache_valid(cache_key, max_age_seconds=1800)
+            }
+
+            # 如果用户请求超过一年，告知前端数据库仅提供最近一年的离线数据
+            if days_requested > 365:
+                response_payload['partial'] = True
+                response_payload['notice'] = 'Database only stores the last 365 days; fetch older data live.'
+
+            return jsonify(response_payload)
         except Exception as e:
             print(f"Error in /api/historical: {e}")
             traceback.print_exc()
@@ -262,8 +277,8 @@ def register_routes(app):
                     model = RandomForestRegressor(n_estimators=30, max_depth=10, random_state=42)
                     model.fit(X[:min(len(X), 100)], y[:min(len(y), 100)])
                     
-                    # 预测
-                    last_features = df[feature_cols].iloc[-1:].values
+                    # 预测 - 保持 DataFrame 格式以避免警告
+                    last_features = df[feature_cols].iloc[-1:]
                     prediction = float(model.predict(last_features)[0])
             
             current_price = float(df['price'].iloc[-1])
@@ -337,10 +352,16 @@ def register_routes(app):
             df = BitcoinAPI.fetch_historical_data(days)
             
             if df is None or df.empty:
+                # 直接从数据库获取
+                print(f"⚠️ API失败，直接从数据库获取 {days} 天数据")
+                df = db_manager.get_historical_data(days=days)
+                
+            if df is None or df.empty:
                 return jsonify({
                     'success': False,
-                    'message': 'Failed to fetch data'
-                }), 500
+                    'message': 'No data available (offline mode)',
+                    'offline_mode': True
+                }), 200  # 返回200而不是500,表示这是预期的降级
             
             # 按日期聚合
             df['date'] = df['datetime'].dt.date

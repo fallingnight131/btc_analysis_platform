@@ -1,2 +1,28 @@
 .DS_Store
 __pycache__/
+
+# 数据库文件
+backend/data/mysql/
+backend/data/*.db
+*.db
+*.db-journal
+
+# 日志文件
+*.log
+
+# 环境配置
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
