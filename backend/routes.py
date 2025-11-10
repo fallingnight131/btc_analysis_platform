@@ -10,6 +10,7 @@ from sklearn.ensemble import RandomForestRegressor
 from api import BitcoinAPI
 from cache import cache_manager
 from database import db_manager
+from backtest import Backtest
 from utils import (
     calculate_technical_indicators,
     prepare_prediction_features,
@@ -424,6 +425,84 @@ def register_routes(app):
             'timestamp': datetime.now().isoformat(),
             'version': '1.0.0'
         })
+    
+    
+    @app.route('/api/backtest', methods=['POST'])
+    def run_backtest():
+        """运行策略回测"""
+        try:
+            data = request.get_json()
+            strategy = data.get('strategy', 'ma_cross')
+            params = data.get('params', {})
+            initial_capital = data.get('initial_capital', 10000)
+            days = data.get('days', 30)
+            
+            print(f"📊 开始回测: strategy={strategy}, params={params}, capital={initial_capital}, days={days}")
+            
+            # 获取历史数据
+            df = db_manager.get_historical_data(days=days)
+            
+            if df is None or df.empty:
+                # 如果数据库没有数据，从API获取
+                df = BitcoinAPI.fetch_historical_data(days)
+            
+            if df is None or df.empty:
+                return jsonify({
+                    'success': False,
+                    'message': 'No historical data available'
+                }), 400
+            
+            # 创建回测引擎
+            backtest = Backtest(df, initial_capital=initial_capital)
+            
+            # 根据策略类型运行回测
+            if strategy == 'ma_cross':
+                short_ma = params.get('short_ma', 5)
+                long_ma = params.get('long_ma', 20)
+                result = backtest.run_ma_cross_strategy(short_ma, long_ma)
+            
+            elif strategy == 'rsi':
+                period = params.get('period', 14)
+                oversold = params.get('oversold', 30)
+                overbought = params.get('overbought', 70)
+                result = backtest.run_rsi_strategy(period, oversold, overbought)
+            
+            elif strategy == 'breakout':
+                lookback = params.get('lookback', 20)
+                threshold = params.get('threshold', 2)
+                result = backtest.run_breakout_strategy(lookback, threshold)
+            
+            elif strategy == 'grid':
+                grids = params.get('grids', 10)
+                price_range = params.get('range', 10)
+                result = backtest.run_grid_strategy(grids, price_range)
+            
+            else:
+                return jsonify({
+                    'success': False,
+                    'message': f'Unknown strategy: {strategy}'
+                }), 400
+            
+            if result is None:
+                return jsonify({
+                    'success': False,
+                    'message': 'Backtest failed'
+                }), 500
+            
+            print(f"✅ 回测完成: 总收益={result['totalReturn']:.2f}%, 交易次数={result['totalTrades']}")
+            
+            return jsonify({
+                'success': True,
+                'data': result
+            })
+            
+        except Exception as e:
+            print(f"❌ 回测错误: {e}")
+            traceback.print_exc()
+            return jsonify({
+                'success': False,
+                'message': str(e)
+            }), 500
     
     
     @app.errorhandler(404)

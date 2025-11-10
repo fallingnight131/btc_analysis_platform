@@ -341,62 +341,52 @@ export default {
     async runBacktest() {
       this.backtesting = true
       
-      // 模拟回测（实际应该调用后端API）
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      // 生成模拟数据
-      const days = 30
-      const equity = []
-      let capital = this.initialCapital
-      
-      for (let i = 0; i < days; i++) {
-        const change = (Math.random() - 0.48) * 0.02 // 轻微向上偏移
-        capital *= (1 + change)
-        equity.push(capital)
-      }
-      
-      const totalReturn = ((capital - this.initialCapital) / this.initialCapital) * 100
-      const trades = Math.floor(Math.random() * 20) + 10
-      const winningTrades = Math.floor(trades * (Math.random() * 0.3 + 0.5))
-      
-      this.backtestResult = {
-        totalReturn,
-        annualReturn: totalReturn * (365 / days),
-        maxDrawdown: -(Math.random() * 15 + 5),
-        sharpeRatio: Math.random() * 2 + 0.5,
-        totalTrades: trades,
-        winningTrades,
-        losingTrades: trades - winningTrades,
-        winRate: (winningTrades / trades) * 100,
-        avgWin: Math.random() * 3 + 2,
-        avgLoss: -(Math.random() * 2 + 1),
-        profitFactor: Math.random() * 0.5 + 1.2,
-        equityCurve: equity,
-        recentTrades: this.generateMockTrades(10)
-      }
-      
-      this.backtesting = false
-      
-      this.$nextTick(() => {
-        this.renderEquityChart()
-      })
-    },
-    generateMockTrades(count) {
-      const trades = []
-      const now = new Date()
-      
-      for (let i = 0; i < count; i++) {
-        const date = new Date(now - i * 24 * 60 * 60 * 1000)
-        trades.push({
-          time: date.toLocaleDateString('zh-CN'),
-          type: Math.random() > 0.5 ? 'BUY' : 'SELL',
-          price: this.statistics?.current_price * (0.98 + Math.random() * 0.04) || 70000,
-          quantity: Math.random() * 0.1 + 0.01,
-          profit: (Math.random() - 0.5) * 10
+      try {
+        console.log('🚀 开始真实回测...')
+        
+        // 准备回测参数
+        const params = {}
+        this.currentStrategyParams.forEach(param => {
+          params[param.name] = param.value
         })
+        
+        console.log('📊 回测参数:', {
+          strategy: this.selectedStrategy,
+          params,
+          initialCapital: this.initialCapital
+        })
+        
+        // 调用后端真实回测API
+        const response = await this.$axios.post('/api/backtest', {
+          strategy: this.selectedStrategy,
+          params: params,
+          initial_capital: this.initialCapital,
+          days: 90  // 使用90天的历史数据进行回测
+        })
+        
+        if (response.data.success) {
+          this.backtestResult = response.data.data
+          
+          console.log('✅ 回测完成:', {
+            totalReturn: this.backtestResult.totalReturn.toFixed(2) + '%',
+            trades: this.backtestResult.totalTrades,
+            winRate: this.backtestResult.winRate.toFixed(2) + '%',
+            sharpeRatio: this.backtestResult.sharpeRatio.toFixed(2)
+          })
+          
+          this.$nextTick(() => {
+            this.renderEquityChart()
+          })
+        } else {
+          console.error('❌ 回测失败:', response.data.message)
+          alert('回测失败: ' + response.data.message)
+        }
+      } catch (error) {
+        console.error('❌ 回测错误:', error)
+        alert('回测出错,请稍后重试')
+      } finally {
+        this.backtesting = false
       }
-      
-      return trades
     },
     renderEquityChart() {
       if (!this.$refs.equityChart) return
