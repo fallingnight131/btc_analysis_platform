@@ -25,9 +25,11 @@ def register_routes(app):
         try:
             data = BitcoinAPI.fetch_realtime_data()
             if data:
+                offline_mode = data.pop('offline_mode', False)
                 return jsonify({
                     'success': True,
-                    'data': data
+                    'data': data,
+                    'offline_mode': offline_mode
                 })
             return jsonify({
                 'success': False, 

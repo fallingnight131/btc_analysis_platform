@@ -9,6 +9,8 @@
 - 🔮 **价格预测** - 基于机器学习的价格预测功能
 - ⚠️ **风险警报** - 智能风险评估和预警系统
 - 📊 **历史数据分析** - 完整的历史数据查询和统计
+- 💾 **数据库支持** - SQLite 本地数据持久化
+- 🔌 **离线模式** - 无网络时自动使用历史数据
 - 🎨 **响应式界面** - 基于 Vue 3 和 Bootstrap 5 的现代化 UI
 
 ## 🛠 技术栈
@@ -19,6 +21,7 @@
 - **Pandas** - 数据处理
 - **NumPy** - 数值计算
 - **Scikit-learn** - 机器学习
+- **SQLite** - 本地数据库（内置）
 - **Requests** - HTTP 请求
 
 ### 前端
@@ -356,6 +359,11 @@ PORT=5002 python app.py
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
+
+### 4. 离线模式
+- **查看离线模式说明**: 请阅读 [DATABASE_OFFLINE_MODE.md](DATABASE_OFFLINE_MODE.md)
+- **测试离线功能**: `cd backend && python test_offline.py`
+- **数据库位置**: `backend/bitcoin_data.db`（自动创建）
 
 ### 4. 前端构建失败
 清除缓存并重新安装：

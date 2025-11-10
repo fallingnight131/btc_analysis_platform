@@ -56,6 +56,12 @@
 
           <!-- 右侧功能按钮 -->
           <div class="d-flex align-items-center">
+            <!-- 离线模式提示 -->
+            <div class="offline-badge me-3" v-if="offlineMode">
+              <i class="bi bi-wifi-off text-warning"></i>
+              <span class="ms-1 small">离线模式</span>
+            </div>
+
             <!-- 实时价格显示 -->
             <div class="price-badge me-3" v-if="realtimePrice">
               <span class="text-muted small">BTC</span>
@@ -188,6 +194,7 @@ export default {
       lastUpdate: '',
       realtimePrice: 0,
       priceChange: 0,
+      offlineMode: false, // 离线模式标记
       statistics: {
         current_price: 0,
         high_24h: 0,
@@ -287,9 +294,13 @@ export default {
           Object.assign(this.statistics, response.data.data)
           this.realtimePrice = this.statistics.current_price
           this.priceChange = this.statistics.price_change_24h
+          
+          // 检查是否为离线模式
+          this.offlineMode = response.data.offline_mode || false
         }
       } catch (error) {
         console.error('Statistics error:', error)
+        this.offlineMode = true // 请求失败也视为离线
       }
     },
 
@@ -550,6 +561,29 @@ body {
 
 .update-toast i {
   font-size: 1.2rem;
+}
+
+/* 离线模式徽章 */
+.offline-badge {
+  background: rgba(255, 193, 7, 0.15);
+  border: 1px solid rgba(255, 193, 7, 0.4);
+  color: #ffc107;
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.offline-badge i {
+  font-size: 1rem;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
 }
 
 /* 响应式 */
