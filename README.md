@@ -77,11 +77,15 @@ EXIT;
 
 **Windows:**
 ```cmd
-REM 1. 启动 MySQL
+REM 1. 启动 MySQL（会自动检测系统 MySQL 或 Anaconda MySQL）
 cd backend
 scripts\start_mysql.bat
 
 REM 2. 设置密码（首次启动需要）
+REM 如果使用系统 MySQL:
+mysql -u root
+
+REM 如果使用 Anaconda MySQL:
 C:\ProgramData\Anaconda3\Library\bin\mysql.exe -u root
 
 REM 在 MySQL 命令行中执行：
@@ -92,6 +96,8 @@ GRANT ALL PRIVILEGES ON bitcoin_db.* TO 'bitcoin_user'@'localhost';
 FLUSH PRIVILEGES;
 EXIT;
 ```
+
+> 💡 **Windows 提示**: `start_mysql.bat` 会自动检测你的 MySQL 安装位置（系统 MySQL 或 Anaconda MySQL），无需手动配置。
 
 #### 选项 B：使用系统 MySQL
 

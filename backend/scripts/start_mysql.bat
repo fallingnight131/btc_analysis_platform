@@ -1,4 +1,5 @@
 @echo off
+setlocal enabledelayedexpansion
 REM 启动 Anaconda MySQL 服务 (Windows)
 
 echo 🐬 启动 Anaconda MySQL 服务
@@ -10,22 +11,53 @@ set "BACKEND_DIR=%SCRIPT_DIR%.."
 set "DATA_DIR=%BACKEND_DIR%\data"
 
 REM MySQL 相关路径
-set "MYSQL_BIN=C:\ProgramData\Anaconda3\Library\bin"
 set "MYSQL_DATA_DIR=%DATA_DIR%\mysql"
-set "MYSQL_SOCKET=%TEMP%\mysql.sock"
-set "MYSQL_PID_FILE=%TEMP%\mysql.pid"
 
-REM 1. 检查 Anaconda MySQL 是否存在
-if not exist "%MYSQL_BIN%\mysqld.exe" (
-    echo ❌ 未找到 Anaconda MySQL
-    echo 请先安装 MySQL 或使用系统 MySQL
+REM 1. 自动检测 MySQL 安装位置
+set "MYSQL_BIN="
+
+REM 检测系统 MySQL（最常见）
+if exist "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysqld.exe" (
+    set "MYSQL_BIN=C:\Program Files\MySQL\MySQL Server 8.0\bin"
+    echo ✅ 检测到 MySQL Server 8.0
+)
+if exist "C:\Program Files\MySQL\MySQL Server 5.7\bin\mysqld.exe" (
+    set "MYSQL_BIN=C:\Program Files\MySQL\MySQL Server 5.7\bin"
+    echo ✅ 检测到 MySQL Server 5.7
+)
+
+REM 检测 Anaconda MySQL
+if "%MYSQL_BIN%"=="" (
+    if exist "C:\ProgramData\Anaconda3\Library\bin\mysqld.exe" (
+        set "MYSQL_BIN=C:\ProgramData\Anaconda3\Library\bin"
+        echo ✅ 检测到 Anaconda MySQL
+    )
+)
+
+REM 检测 PATH 中的 MySQL
+if "%MYSQL_BIN%"=="" (
+    where mysqld.exe >nul 2>&1
+    if %ERRORLEVEL% equ 0 (
+        for /f "delims=" %%i in ('where mysqld.exe') do set "MYSQL_BIN=%%~dpi"
+        set "MYSQL_BIN=!MYSQL_BIN:~0,-1!"
+        echo ✅ 检测到 PATH 中的 MySQL
+    )
+)
+
+REM 如果都没找到，提示用户
+if "%MYSQL_BIN%"=="" (
+    echo ❌ 未找到 MySQL 安装
     echo.
-    echo 💡 Windows 安装 MySQL:
+    echo 💡 请先安装 MySQL:
     echo    1. 下载 MySQL Installer: https://dev.mysql.com/downloads/installer/
     echo    2. 或使用 Chocolatey: choco install mysql
+    echo    3. 或手动指定 MySQL 路径（编辑此脚本）
     pause
     exit /b 1
 )
+
+echo 📁 使用 MySQL: %MYSQL_BIN%
+echo.
 
 REM 2. 创建数据目录
 if not exist "%MYSQL_DATA_DIR%" (

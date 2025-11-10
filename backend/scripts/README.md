@@ -61,6 +61,9 @@ scripts\stop_mysql.bat
 ## 注意事项
 
 - **macOS/Linux**: 脚本使用 Anaconda 提供的 MySQL（位于 `/opt/anaconda3/bin/`）
-- **Windows**: 脚本使用 Anaconda 提供的 MySQL（位于 `C:\ProgramData\Anaconda3\Library\bin\`）
+- **Windows**: 脚本会自动检测 MySQL 安装位置
+  - 优先检测系统 MySQL (`C:\Program Files\MySQL\`)
+  - 其次检测 Anaconda MySQL (`C:\ProgramData\Anaconda3\Library\bin\`)
+  - 最后检测 PATH 环境变量中的 MySQL
 - 数据存储在 `backend/data/mysql`
 - 日志文件位于 `/tmp/mysql.log` (macOS/Linux) 或 `%TEMP%\mysql.log` (Windows)
